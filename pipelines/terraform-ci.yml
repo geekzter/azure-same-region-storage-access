@@ -340,7 +340,6 @@ jobs:
           workingDirectory: '$(scriptDirectory)'
 
 
-
 - ${{ if ne(parameters.destroy, 'Never') }}:
   # Clean up resources, in the event 'terraform destroy' fails   
   - job: 'Teardown'
