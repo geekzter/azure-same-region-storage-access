@@ -319,7 +319,7 @@ jobs:
     - ${{ if not(eq(parameters.destroy, 'Never')) }}:
       - task: AzureCLI@2
         displayName: 'Terraform destroy (${{ lower(parameters.destroy) }})'
-        name: apply
+        name: destroy
         inputs:
           azureSubscription: '$(subscriptionConnection)'
           scriptType: pscore
