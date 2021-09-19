@@ -270,7 +270,6 @@ jobs:
 
     - task: AzureCLI@2
       displayName: 'Retrieve blob'
-      name: apply2
       inputs:
         azureSubscription: '$(subscriptionConnection)'
         scriptType: pscore
