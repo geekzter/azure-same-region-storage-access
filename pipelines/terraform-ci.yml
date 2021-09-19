@@ -289,6 +289,9 @@ jobs:
 
           if ($${{ parameters.letMeIn }}) {
             ./let_me_in.ps1
+            $waitSeconds = 30
+            Write-Host "Waiting $waitSeconds seconds..."
+            Start-Sleep -Seconds $waitSeconds
           }
           Invoke-WebRequest "$(apply.storage_blob_url)"
         addSpnToEnvironment: true
