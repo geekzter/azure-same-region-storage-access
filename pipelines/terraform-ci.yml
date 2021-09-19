@@ -268,9 +268,19 @@ jobs:
         failOnStandardError: true
         workingDirectory: '$(scriptDirectory)'
 
-    - pwsh: |
-        Invoke-WebRequest "$(apply.storage_blob_url)"
+    - task: AzureCLI@2
       displayName: 'Retrieve blob'
+      name: apply2
+      inputs:
+        azureSubscription: '$(subscriptionConnection)'
+        scriptType: pscore
+        scriptLocation: inlineScript
+        inlineScript: |
+          ./let_me_in.ps1
+          Invoke-WebRequest "$(apply.storage_blob_url)"
+        useGlobalConfig: true
+        failOnStandardError: true
+        workingDirectory: '$(scriptDirectory)'
 
     - ${{ if parameters.testReentrance }}:
       - task: AzureCLI@2
