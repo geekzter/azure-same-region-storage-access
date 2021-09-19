@@ -123,29 +123,29 @@ try {
 
     if ($Plan -or $Apply) {
         try {
-            $vmMedatata = (Invoke-RestMethod -Headers @{"Metadata"="true"} -Method GET -NoProxy -Uri "http://169.254.169.254/metadata/instance/compute?api-version=2021-02-01" -TimeoutSec 1)
+            $vmMetadata = (Invoke-RestMethod -Headers @{"Metadata"="true"} -Method GET -NoProxy -Uri "http://169.254.169.254/metadata/instance/compute?api-version=2021-02-01" -TimeoutSec 1)
         }
         catch {
-            $vmMedatata = $null
+            $vmMetadata = $null
         }
-        if ($vmMedatata) {
-            $location = $vmMedatata.location 
+        if ($vmMetadata) {
+            $location = $vmMetadata.location 
             Write-Host "Running in Azure region ${location}, using same location as deployment target"
             $env:TF_VAR_location = $location
 
-            # $terraformDirectory = (Join-Path (Split-Path -parent -Path $PSScriptRoot) "terraform")
-            # Push-Location $terraformDirectory
-            # $resourceGroup = (Get-TerraformOutput resource_group_name)
-            # $storageAccount = (Get-TerraformOutput storage_account_name)
-            # Pop-Location
+            # ISSUE: If a pipeline agent or Codespace is located in the same region as a storage account the request will be routed over Microsoft’s internal IPv6 network. As a result the source IP of the request is not the same as the one added to the Storage Account firewall.
+            # 1.0;2020-05-17T13:22:59.2714021Z;GetContainerProperties;IpAuthorizationError;403;4;4;authenticated;xxxxxx;xxxxxx;blob;"https://xxxxxx.blob.core.windows.net:443/paasappscripts?restype=container";"/";75343457-f01e-005c-674e-2c705c000000;0;172.16.5.4:59722;2018-11-09;453;0;130;246;0;;;;;;"Go/go1.14.2 (amd64-linux) go-autorest/v14.0.0 tombuildsstuff/giovanni/v0.10.0 storage/2018-11-09";;
+            # HACK: Open the door, Terraform will close it again
+            $terraformDirectory = (Join-Path (Split-Path -parent -Path $PSScriptRoot) "terraform")
+            Push-Location $terraformDirectory
+            $resourceGroup = (Get-TerraformOutput resource_group_name)
+            $storageAccount = (Get-TerraformOutput storage_account_name)
+            Pop-Location
 
-            # if ($storageAccount) {
-            #     # ISSUE: If a pipeline agent or Codespace is located in the same region as a storage account the request will be routed over Microsoft’s internal IPv6 network. As a result the source IP of the request is not the same as the one added to the Storage Account firewall.
-            #     # 1.0;2020-05-17T13:22:59.2714021Z;GetContainerProperties;IpAuthorizationError;403;4;4;authenticated;xxxxxx;xxxxxx;blob;"https://xxxxxx.blob.core.windows.net:443/paasappscripts?restype=container";"/";75343457-f01e-005c-674e-2c705c000000;0;172.16.5.4:59722;2018-11-09;453;0;130;246;0;;;;;;"Go/go1.14.2 (amd64-linux) go-autorest/v14.0.0 tombuildsstuff/giovanni/v0.10.0 storage/2018-11-09";;
-            #     # HACK: Open the door, Terraform will close it again
-            #     Write-Host "Opening storage firewall on ${storageAccount}..."
-            #     az storage account update -g $resourceGroup -n $storageAccount --default-action Allow --query "networkRuleSet" #-o none
-            # }
+            if ($storageAccount) {
+                Write-Host "Opening storage firewall on ${storageAccount}..."
+                az storage account update -g $resourceGroup -n $storageAccount --default-action Allow --query "networkRuleSet" #-o none
+            }
         }
 
         # Create plan
