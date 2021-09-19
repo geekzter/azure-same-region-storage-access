@@ -24,3 +24,7 @@ variable resource_suffix {
   description                  = "The suffix to put at the of resource names created"
   default                      = "" # Empty string triggers a random suffix
 }
+variable run_id {
+  description                  = "The ID that identifies the pipeline / workflow that invoked Terraform"
+  default                      = ""
+}

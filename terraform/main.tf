@@ -69,6 +69,7 @@ locals {
     application                = "Azure same-region storage access"
     provisioner                = "terraform"
     repository                 = local.repository
+    runid                      = var.run_id
     suffix                     = local.suffix
     workspace                  = terraform.workspace
   }
