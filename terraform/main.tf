@@ -60,11 +60,6 @@ locals {
   admin_ip                     = [
                                   chomp(data.http.localpublicip.body) 
   ]
-  admin_ip_cidr                = [
-                                  "${chomp(data.http.localpublicip.body)}/30", # /32 not allowed in network_rules
-                                  # HACK: Complete prefix
-                                  local.ipprefix
-  ] 
   admin_ips                    = setunion(local.admin_ip,var.admin_ips)
   admin_ip_ranges              = setunion([for ip in local.admin_ips : format("%s/30", ip)],var.admin_ip_ranges) # /32 not allowed in network_rules
   admin_cidr_ranges            = [for range in local.admin_ip_ranges : cidrsubnet(range,0,0)] # Make sure ranges have correct base address

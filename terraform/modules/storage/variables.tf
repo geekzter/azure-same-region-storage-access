@@ -1,17 +1,15 @@
+variable data_owner_object_id {}
 
-variable address_space {
-    description                = "The IP range for the VNet"
+variable admin_ips {
+  type                         = list
 }
-variable deploy_bastion {
-    type                       = bool
-}
+
 variable location {
   description                  = "The location/region where the virtual network is created. Changing this forces a new resource to be created."
 }
 variable log_analytics_workspace_id {
     default                    = null
 }
-# variable private_dns_zone_name {}
 variable resource_group_name {
   description                  = "The name of the resource group"
 }
