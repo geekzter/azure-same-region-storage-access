@@ -122,7 +122,7 @@ try {
         $varArgs = " -var-file='$varsFile'"
     }
 
-    if ($Plan -or $Apply) {
+    if ($Plan -or $Apply -or $Destroy) {
         try {
             $vmMetadata = (Invoke-RestMethod -Headers @{"Metadata"="true"} -Method GET -NoProxy -Uri "http://169.254.169.254/metadata/instance/compute?api-version=2021-02-01" -TimeoutSec 1)
         } catch {
@@ -151,7 +151,9 @@ try {
                 az storage account update -g $resourceGroup -n $storageAccount --default-action Allow --query "networkRuleSet" #-o none
             }
         }
+    }
 
+    if ($Plan -or $Apply) {
         # Create plan
         Invoke "terraform plan $varArgs -out='$planFile'"
     }
