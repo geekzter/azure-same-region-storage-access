@@ -5,3 +5,8 @@ output resource_group_name {
 output storage_account_name {
   value       = module.storage.name
 }
+
+output storage_blob_url {
+  sensitive   = true
+  value       = module.storage.blob_url
+}

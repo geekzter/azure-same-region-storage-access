@@ -6,6 +6,7 @@ terraform {
     local                      = "~> 2.1"
     null                       = "~> 3.1"
     random                     = "~> 3.1"
+    time                       = "~> 0.7"
   }
   required_version             = ">= 0.14"
 }

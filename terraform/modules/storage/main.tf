@@ -51,3 +51,41 @@ resource azurerm_storage_blob app_storage_blob_sample {
   type                         = "Block"
   source                       = "../data/sample.txt"
 }
+
+resource time_offset sas_expiry {
+  offset_years                 = 1
+}
+resource time_offset sas_start {
+  offset_days                  = -10
+}
+data azurerm_storage_account_sas app_storage {
+  connection_string            = azurerm_storage_account.app_storage.primary_connection_string
+  https_only                   = true
+
+  resource_types {
+    service                    = false
+    container                  = true
+    object                     = true
+  }
+
+  services {
+    blob                       = true
+    queue                      = false
+    table                      = false
+    file                       = false
+  }
+
+  start                        = time_offset.sas_start.rfc3339
+  expiry                       = time_offset.sas_expiry.rfc3339  
+
+  permissions {
+    read                       = true
+    add                        = false
+    create                     = false
+    write                      = false
+    delete                     = false
+    list                       = true
+    update                     = false
+    process                    = false
+  }
+}

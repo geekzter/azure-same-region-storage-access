@@ -147,7 +147,7 @@ try {
             Pop-Location
 
             if ($storageAccount) {
-                Write-Host "Opening storage firewall on ${storageAccount}..."
+                Write-Host "`nOpening storage firewall on ${storageAccount}..."
                 az storage account update -g $resourceGroup -n $storageAccount --default-action Allow --query "networkRuleSet" #-o none
             }
         }
