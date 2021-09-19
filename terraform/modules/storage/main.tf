@@ -40,6 +40,7 @@ resource azurerm_storage_container app_storage_container {
   storage_account_name         = azurerm_storage_account.app_storage.name
   container_access_type        = "private"
 
+  # Creating FW rules prior to accessing storage container will fail if Terraform is run from the same Azure region
   # depends_on                   = [azurerm_storage_account_network_rules.app_storage]
 }
 resource azurerm_storage_blob app_storage_blob_sample {

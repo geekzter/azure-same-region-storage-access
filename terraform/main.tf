@@ -51,10 +51,9 @@ resource random_string suffix {
 # These variables will be used throughout the Terraform templates
 locals {
 # password                     = ".Az9${random_string.password.result}"
-  prefix                       = "storage-access"
-  suffix                       = random_string.suffix.result
+  suffix                       = var.resource_suffix != "" ? lower(var.resource_suffix) : random_string.suffix.result
   repository                   = "azure-same-region-storage-access"
-  resource_group_name          = "${lower(local.prefix)}-${terraform.workspace}-${lower(local.suffix)}"
+  resource_group_name          = "${lower(var.resource_prefix)}-${terraform.workspace}-${lower(local.suffix)}"
   ipprefixdata                 = jsondecode(chomp(data.http.localpublicprefix.body))
   ipprefix                     = local.ipprefixdata.data.prefix
   admin_ip                     = [

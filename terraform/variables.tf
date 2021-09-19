@@ -15,3 +15,12 @@ variable location {
   # eastus, northeurope, southeastasia, uksouth, westeurope, westus2
   default                      = "northeurope"
 }
+
+variable resource_prefix {
+  description                  = "The prefix to put in front of resource names created"
+  default                      = "storage-access"
+}
+variable resource_suffix {
+  description                  = "The suffix to put at the of resource names created"
+  default                      = "" # Empty string triggers a random suffix
+}
