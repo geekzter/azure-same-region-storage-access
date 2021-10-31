@@ -1,22 +1,6 @@
 data azurerm_client_config current {}
 data azurerm_subscription primary {}
 
-# FIX: Required for Azure Cloud Shell (azurerm_client_config.current.object_id not populated)
-# HACK: Retrieve user objectId in case it is not exposed in azurerm_client_config.current.object_id
-data external account_info {
-  program                      = [
-                                 "az",
-                                 "ad",
-                                 "signed-in-user",
-                                 "show",
-                                 "--query",
-                                 "{object_id:objectId}",
-                                 "-o",
-                                 "json",
-                                 ]
-  count                        = data.azurerm_client_config.current.object_id != null && data.azurerm_client_config.current.object_id != "" ? 0 : 1
-}
-
 data http localpublicip {
 # Get public IP address of the machine running this terraform template
   url                          = "http://ipinfo.io/ip"
@@ -62,12 +46,12 @@ locals {
   admin_ips                    = setunion(local.admin_ip,var.admin_ips)
   admin_ip_ranges              = setunion([for ip in local.admin_ips : format("%s/30", ip)],var.admin_ip_ranges) # /32 not allowed in network_rules
   admin_cidr_ranges            = [for range in local.admin_ip_ranges : cidrsubnet(range,0,0)] # Make sure ranges have correct base address
-  # FIX: Required for Azure Cloud Shell (azurerm_client_config.current.object_id not populated)
-  automation_object_id         = data.azurerm_client_config.current.object_id != null && data.azurerm_client_config.current.object_id != "" ? data.azurerm_client_config.current.object_id : data.external.account_info.0.result.object_id
 
   tags                         = {
     application                = "Azure same-region storage access"
     provisioner                = "terraform"
+    provisioner-client-id      = data.azurerm_client_config.current.client_id
+    provisioner-object-id      = data.azurerm_client_config.current.object_id
     repository                 = local.repository
     runid                      = var.run_id
     suffix                     = local.suffix
