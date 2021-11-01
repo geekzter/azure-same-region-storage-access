@@ -123,17 +123,8 @@ try {
     }
 
     if ($Plan -or $Apply -or $Destroy) {
-        try {
-            $vmMetadata = (Invoke-RestMethod -Headers @{"Metadata"="true"} -Method GET -NoProxy -Uri "http://169.254.169.254/metadata/instance/compute?api-version=2021-02-01" -TimeoutSec 1)
-        } catch {
-            $vmMetadata = $null
-        }
-        if ($vmMetadata) {
-            $location = $vmMetadata.location 
-            Write-Host "`nRunning in Azure region ${location}"
-            $env:TF_VAR_location ??= $location
-            Write-Host "Using $env:TF_VAR_location as deployment target"
-        }
+        $env:TF_VAR_location ??= Show-AzureRegion
+        Write-Host "Using $env:TF_VAR_location as deployment target"
 
         if (!$SkipFirewallUpdate) {
             # ISSUE: If a pipeline agent or Codespace is located in the same region as a storage account the request will be routed over Microsoft’s internal IPv6 network. As a result the source IP of the request is not the same as the one added to the Storage Account firewall.
