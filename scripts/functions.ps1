@@ -83,6 +83,28 @@ function AzLogin (
     }
 }
 
+function Get-AzureRegion() {
+    try {
+        $vmMetadata = (Invoke-RestMethod -Headers @{"Metadata"="true"} -Method GET -NoProxy -Uri "http://169.254.169.254/metadata/instance/compute?api-version=2021-02-01" -TimeoutSec 1)
+    } catch {
+        $vmMetadata = $null
+    }
+    if ($vmMetadata) {
+        return $vmMetadata.location 
+    }
+}
+
+
+function Show-AzureRegion() {
+    $azureRegion = Get-AzureRegion
+    if ($azureRegion) {
+        Write-Host "Running in Azure region ${azureRegion}"
+    } else {
+        Write-Host "Not running in Azure"
+    }
+    return $azureRegion
+}
+
 function Get-TerraformDirectory {
     return (Join-Path (Split-Path $PSScriptRoot -Parent) "terraform")
 }
