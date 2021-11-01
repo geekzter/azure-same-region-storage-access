@@ -98,7 +98,7 @@ function Get-AzureRegion() {
 function Show-AzureRegion() {
     $azureRegion = Get-AzureRegion
     if ($azureRegion) {
-        Write-Host "Running in Azure region ${location}"
+        Write-Host "Running in Azure region ${azureRegion}"
     } else {
         Write-Host "Not running in Azure"
     }
