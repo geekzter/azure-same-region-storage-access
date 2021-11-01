@@ -1,0 +1,38 @@
+trigger: none
+
+pr:
+  branches:
+    include:
+    - '*'
+  paths:
+    exclude:
+    - '.devcontainer/**'  
+    - 'visuals/**'  
+    - '*.md'  
+
+schedules:
+- cron: '0 23 * * *'
+  displayName: 'Nightly build (UTC)'
+  # Run if there are no changes
+  always: 'true'
+  branches:
+    include:
+    - main
+
+variables:
+- name: 'scriptDirectory'
+  value: '$(Build.SourcesDirectory)/scripts'
+
+jobs:
+- job: 'azureregioninfo'
+  displayName: 'Show region info'
+
+  pool:
+    name: '$(pool)'
+    vmImage: $(vmImage)
+
+  steps:
+    - pwsh: |
+        ./show_azure_region.ps1
+      displayName: 'Show Azure region'
+      workingDirectory: '$(scriptDirectory)'
