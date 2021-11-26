@@ -34,6 +34,15 @@ jobs:
 
   steps:
     - pwsh: |
+        Get-Item Env:* | Sort-Object -Property Name
+      displayName: 'List environment variables'
+
+    - pwsh: |
+        if ($env:SYSTEM_DEBUG -eq "true") {
+          $InformationPreference = "Continue"
+          $VerbosePreference = "Continue"
+          $DebugPreference = "Continue"
+        }
         ./show_azure_region.ps1
       displayName: 'Show Azure region'
       workingDirectory: '$(scriptDirectory)'
