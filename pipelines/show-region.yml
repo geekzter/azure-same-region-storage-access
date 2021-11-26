@@ -34,7 +34,11 @@ jobs:
 
   steps:
     - pwsh: |
-        if ((${env:system.debug} -eq "true") -or ($env:system_debug -eq "true") -or ($env:SYSTEM_DEBUG -eq "true")) {
+        Get-Item Env:* | Sort-Object -Property Name
+      displayName: 'List environment variables'
+
+    - pwsh: |
+        if ($env:SYSTEM_DEBUG -eq "true") {
           $InformationPreference = "Continue"
           $VerbosePreference = "Continue"
           $DebugPreference = "Continue"
@@ -42,20 +46,3 @@ jobs:
         ./show_azure_region.ps1
       displayName: 'Show Azure region'
       workingDirectory: '$(scriptDirectory)'
-
-    - pwsh: |
-        Get-Item Env:* | Sort-Object -Property Name
-      displayName: 'List environment variables'
-
-    - pwsh: |
-        if ((${env:system.debug} -eq "true") -or ($env:system_debug -eq "true") -or ($env:SYSTEM_DEBUG -eq "true")) {
-          Invoke-RestMethod -Headers @{"Metadata"="true"} -Method GET -NoProxy -Uri "http://169.254.169.254/metadata/instance?api-version=2021-02-01" -TimeoutSec 1
-
-          if (Get-Command hostname -ErrorAction SilentlyContinue) {
-            hostname
-          }
-          if (Get-Command hostnamectl -ErrorAction SilentlyContinue) {
-            hostnamectl
-          }
-        }
-      displayName: 'Diagnostics'

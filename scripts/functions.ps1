@@ -91,6 +91,7 @@ function Get-AzureRegion() {
         $vmMetadata = $null
     }
     if ($vmMetadata) {
+        Write-Debug "VM Name: $($vmMetadata.location)"
         return $vmMetadata.location 
     }
 }
