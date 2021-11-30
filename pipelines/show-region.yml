@@ -26,7 +26,7 @@ variables:
 
 jobs:
 - job: 'azureregioninfo'
-  displayName: 'Show Azure VM instance info'
+  displayName: 'Show Azure info'
 
   pool:
     name: '$(pool)'
@@ -46,6 +46,6 @@ jobs:
         . ./functions.ps1
         $vmMetadata = (Get-ComputeMetadata)
         Write-Host "Azure VM instance compute metadata:"
-        $vmMetadata | Format-List
-      displayName: 'Show Azure region'
+        $vmMetadata | Format-List -Property AzurePublicCloud, location, name, osType, vmId, vmSize
+      displayName: 'Show Azure VM instance info'
       workingDirectory: '$(scriptDirectory)'
