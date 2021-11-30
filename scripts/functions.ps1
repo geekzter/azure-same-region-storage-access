@@ -101,8 +101,8 @@ function Get-ComputeMetadata() {
 function Get-AzureRegion() {
     $vmMetadata = Get-ComputeMetadata
     if ($vmMetadata) {
-        Write-Host "Running in Azure region $($vmMetadata.name)"
-        return $vmMetadata.name
+        Write-Host "Running in Azure region $($vmMetadata.location)"
+        return $vmMetadata.location
     }
 }
 
