@@ -2,4 +2,10 @@
 
 . (Join-Path $PSScriptRoot functions.ps1)
 
-Show-AzureRegion
+$location = Get-AzureRegion
+
+if ($location) {
+    Write-Host "Azure region is '$location'"
+} else {
+    Write-Host "Not running in Azure"
+}
