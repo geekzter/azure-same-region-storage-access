@@ -135,6 +135,10 @@ jobs:
 
   steps:
     - pwsh: |
+        Get-Item Env:* | Sort-Object -Property Name
+      displayName: 'List environment variables'
+
+    - pwsh: |
         ./show_azure_region.ps1
       displayName: 'Show Azure region'
       workingDirectory: '$(scriptDirectory)'
