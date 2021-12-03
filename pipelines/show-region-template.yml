@@ -1,0 +1,50 @@
+# This pipeline performs a full CI test of the VDC:
+#  - Provision infrastructure
+#  - Deploy application
+#  - Test application
+#  - Destroy infrastructure
+
+parameters:
+- name: name
+  displayName: Name
+  type: string
+- name: displayName
+  displayName: Job Display Name
+  type: string
+- name: pool
+  displayName: Pool
+  type: string
+- name: vmImage
+  displayName: VM Image
+  type: string
+
+
+
+jobs:
+- job: ${{ parameters.name }}
+  displayName: ${{ parameters.deploymentName }}
+  variables:
+  - group: 'storage-access-ci'
+  - name: 'scriptDirectory'
+    value: '$(Build.SourcesDirectory)/scripts'
+  pool:
+    name: '$(pool)'
+    vmImage: $(vmImage)
+  steps:
+    - pwsh: |
+        Get-Item Env:* | Sort-Object -Property Name
+      displayName: 'List environment variables'
+    - pwsh: |
+        if ($env:SYSTEM_DEBUG -eq "true") {
+          $InformationPreference = "Continue"
+          $VerbosePreference = "Continue"
+          $DebugPreference = "Continue"
+        }
+        . ./functions.ps1
+        $vmMetadata = (Get-ComputeMetadata)
+        Write-Host "`nAzure VM instance compute metadata for Job '${env:SYSTEM_JOBID}':"
+        $vmMetadata | Format-List -Property AzurePublicCloud, location, name, osType, vmId, vmSize
+        $selfLink = "${env:SYSTEM_TASKDEFINITIONSURI}${env:SYSTEM_TEAMPROJECT}/_build/results?buildId=${env:BUILD_BUILDID}&view=logs&j=${env:SYSTEM_JOBID}&t=${env:SYSTEM_TASKINSTANCEID}"
+        Write-Host "Link to this output: $selfLink"
+      displayName: 'Show Azure VM instance info'
+      workingDirectory: '$(scriptDirectory)'

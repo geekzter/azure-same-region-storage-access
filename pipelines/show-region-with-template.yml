@@ -1,0 +1,31 @@
+trigger:
+  branches:
+    include:
+    - '*'
+pr:
+  branches:
+    include:
+    - '*'
+  paths:
+    exclude:
+    - '.devcontainer/**'  
+    - 'visuals/**'  
+    - '*.md'  
+
+schedules:
+- cron: '0 23 * * *'
+  displayName: 'Nightly build (UTC)'
+  always: 'true'
+  branches:
+    include:
+    - main
+
+jobs:
+- template: show-region-template.yml
+  parameters:
+    name: 'job1'
+    displayName: 'Job 1'
+- template: show-region-template.yml
+  parameters:
+    name: 'job2'
+    displayName: 'Job 2'
