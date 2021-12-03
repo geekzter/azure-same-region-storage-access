@@ -11,14 +11,6 @@ parameters:
 - name: displayName
   displayName: Job Display Name
   type: string
-- name: pool
-  displayName: Pool
-  type: string
-- name: vmImage
-  displayName: VM Image
-  type: string
-
-
 
 jobs:
 - job: ${{ parameters.name }}
