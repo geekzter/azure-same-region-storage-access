@@ -1,9 +1,3 @@
-# This pipeline performs a full CI test of the VDC:
-#  - Provision infrastructure
-#  - Deploy application
-#  - Test application
-#  - Destroy infrastructure
-
 parameters:
 - name: name
   displayName: Name
