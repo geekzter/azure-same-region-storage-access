@@ -14,7 +14,7 @@ parameters:
 
 jobs:
 - job: ${{ parameters.name }}
-  displayName: ${{ parameters.deploymentName }}
+  displayName: ${{ parameters.displayName }}
   variables:
   - group: 'storage-access-ci'
   - name: 'scriptDirectory'
