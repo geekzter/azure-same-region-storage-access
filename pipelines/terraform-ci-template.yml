@@ -40,11 +40,16 @@ parameters:
   displayName: Unpin Terraform provider versions
   type: boolean
   default: false
+- name: precedingJob
+  type: string
+  default: ''
 
 jobs:
 - job: ${{ parameters.name }}
   displayName: '${{ parameters.displayName }}'
-  condition: succeeded()
+  ${{ if ne(length(parameters.precedingJob),0) }}:  
+    dependsOn: ${{ parameters.precedingJob }}
+    condition: eq(dependencies.${{ parameters.precedingJob }}.outputs['detectRegion.location'],'${{ parameters.deploymentRegion }}') # Same region, try again
 
   pool:
     vmImage: ubuntu-latest
@@ -64,8 +69,30 @@ jobs:
       displayName: 'List environment variables'
 
     - pwsh: |
-        ./show_azure_region.ps1
-      displayName: 'Show Azure region'
+        if ($env:SYSTEM_DEBUG -eq "true") {
+          $InformationPreference = "Continue"
+          $VerbosePreference = "Continue"
+          $DebugPreference = "Continue"
+        }
+        . ./functions.ps1
+        $vmMetadata = Get-ComputeMetadata
+        Write-Host "`nAzure VM instance compute metadata for Job '${env:SYSTEM_JOBID}':"
+        $vmMetadata | Format-List -Property AzurePublicCloud, location, name, osType, vmId, vmSize
+
+        $location = Get-AzureRegion
+        if ($location -ieq "${{ parameters.deploymentRegion }}") {
+          Write-Host "Agent is in same location as deployment region ('${{ parameters.deploymentRegion }}')"
+          Write-Output "##vso[task.setvariable variable=sameRegion;isOutput=true]true"
+        } else {
+          Write-Host "Agent is in different location ($location) as deployment region (${{ parameters.deploymentRegion }})"
+          Write-Output "##vso[task.setvariable variable=sameRegion;isOutput=true]false"
+        }
+        Write-Output "##vso[task.setvariable variable=location;isOutput=true]$location"
+
+        $selfLink = "${env:SYSTEM_TASKDEFINITIONSURI}${env:SYSTEM_TEAMPROJECT}/_build/results?buildId=${env:BUILD_BUILDID}&view=logs&j=${env:SYSTEM_JOBID}&t=${env:SYSTEM_TASKINSTANCEID}"
+        Write-Host "Link to this output: $selfLink"
+      name: detectRegion
+      displayName: 'Show Azure VM instance info'
       workingDirectory: '$(scriptDirectory)'
 
     - pwsh: |
