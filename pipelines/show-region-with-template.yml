@@ -1,9 +1,9 @@
-parameters:
-- name: jobsList
-  type: object
-  default:
-  - one
-  - two
+# parameters:
+# - name: jobsList
+#   type: object
+#   default:
+#   - one
+#   - two
 
 trigger:
   branches:
@@ -28,8 +28,18 @@ schedules:
     - main
 
 jobs:
-- ${{ each value in parameters.jobsList }}:
+# - ${{ each value in parameters.jobsList }}:
+#   - template: show-region-template.yml
+#     parameters:
+#       name: 'job${{ value }}'
+#       displayName: 'Job ${{ value }}'
   - template: show-region-template.yml
     parameters:
-      name: 'job${{ value }}'
-      displayName: 'Job ${{ value }}'
+      name: 'job1'
+      displayName: 'Job 1'
+  - template: show-region-template.yml
+    parameters:
+      name: 'job2'
+      displayName: 'Job 2'
+      precedingJobs:
+      - job1

@@ -5,10 +5,17 @@ parameters:
 - name: displayName
   displayName: Job Display Name
   type: string
+- name: precedingJobs
+  type: object
+  default: []
 
 jobs:
 - job: ${{ parameters.name }}
   displayName: ${{ parameters.displayName }}
+  ${{ if ne(length(parameters.precedingJobs),0) }}:  
+    dependsOn:
+      - ${{ each value in parameters.precedingJobs }}:
+        - ${{ value }}
   variables:
   - group: 'storage-access-ci'
   - name: 'scriptDirectory'
