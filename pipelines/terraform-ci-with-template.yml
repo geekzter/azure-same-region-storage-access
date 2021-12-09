@@ -1,0 +1,82 @@
+parameters:
+- name: workspace
+  displayName: Pipeline Environment / Terraform Workspace
+  type: string
+  default: ci
+  values:
+  - ci
+  - ci1
+  - ci2
+  - ci3
+  - cd1
+  - cd2
+  - cd3
+- name: letMeIn
+  displayName: Open Storage Firewall as needed
+  type: boolean
+  default: true # TODO: default to false
+- name: clear
+  displayName: Clear State
+  type: boolean
+  default: false
+- name: destroy
+  displayName: Destroy Infrastructure
+  type: string
+  default: Always
+  values:
+  - Always
+  - Never 
+  - 'On failure'
+  - 'On success'
+- name: testReentrance
+  displayName: Test Terraform re-entrance (apply twice)
+  type: boolean
+  default: true
+- name: unpinTerraform
+  displayName: Unpin Terraform version
+  type: boolean
+  default: false
+- name: unpinTerraformProviders
+  displayName: Unpin Terraform provider versions
+  type: string
+  default: No
+  values:
+  - No
+  - Yes
+  - Strategy
+
+name: $(Date:yyyyMMdd)$(Rev:.r)-${{ parameters.workspace }}-${{ parameters.deploymentRegion }}
+
+trigger: none
+
+pr:
+  branches:
+    include:
+    - '*'
+  paths:
+    exclude:
+    - '.devcontainer/**'  
+    - 'visuals/**'  
+    - '*.md'  
+
+schedules:
+- cron: '0 23 * * *'
+  displayName: 'Nightly build (UTC)'
+  always: 'true'
+  branches:
+    include:
+    - main
+
+jobs:
+  - template: terraform-ci-template.yml
+    parameters:
+      # name: 'job1'
+      # displayName: 'Job 1'
+      # deploymentRegion: ${{ parameters.deploymentRegion }}
+      workspace: ${{ parameters.workspace }}
+      letMeIn: ${{ parameters.letMeIn }}
+      clear: ${{ parameters.clear }}
+      destroy: ${{ parameters.destroy }}
+      testReentrance: ${{ parameters.testReentrance }}
+      unpinTerraform: ${{ parameters.unpinTerraform }}
+      unpinTerraformProviders: ${{ parameters.unpinTerraformProviders }}

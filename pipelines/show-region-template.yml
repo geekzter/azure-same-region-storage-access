@@ -24,8 +24,9 @@ jobs:
   #       - ${{ value }}
   ${{ if ne(length(parameters.precedingJob),0) }}:  
     dependsOn: ${{ parameters.precedingJob }}
-    # condition: eq(dependencies.${{ parameters.precedingJob }}.outputs['detectRegion.location'],'${{ parameters.deploymentRegion }}')
-    condition: ne(dependencies.${{ parameters.precedingJob }}.outputs['detectRegion.sameRegion'],'false')
+    condition: eq(dependencies.${{ parameters.precedingJob }}.outputs['detectRegion.location'],'${{ parameters.deploymentRegion }}') # Same region, try again
+    # condition: eq(dependencies.${{ parameters.precedingJob }}.outputs['detectRegion.sameRegion'],'true') # Same region, try again
+    # condition: ne(dependencies.${{ parameters.precedingJob }}.outputs['detectRegion.sameRegion'],'false')
     # condition: not(containsValue(dependencies.*.outputs['detectRegion.sameRegion'], 'false'))
   # ${{ if ne(length(parameters.precedingJobs),0) }}:  
   #   condition: 
