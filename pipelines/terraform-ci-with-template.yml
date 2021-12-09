@@ -42,12 +42,8 @@ parameters:
   default: false
 - name: unpinTerraformProviders
   displayName: Unpin Terraform provider versions
-  type: string
-  default: No
-  values:
-  - No
-  - Yes
-  - Strategy
+  type: boolean
+  default: false
 
 name: $(Date:yyyyMMdd)$(Rev:.r)-${{ parameters.workspace }}-${{ parameters.deploymentRegion }}
 
