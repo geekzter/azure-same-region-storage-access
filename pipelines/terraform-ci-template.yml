@@ -67,8 +67,7 @@ jobs:
   condition: succeeded()
 
   pool:
-    name: '$(pool)'
-    vmImage: $(vmImage)
+    vmImage: ubuntu-latest
 
   ${{ if or(eq(parameters.unpinTerraformProviders, 'Strategy'),not(eq(variables['Build.Reason'], 'Manual'))) }}:
     strategy:
@@ -346,8 +345,7 @@ jobs:
         terraformVersion: $[ dependencies.Provision.outputs['pinTerraformProviders.terraformConfig.version'] ]
 
     pool:
-      name: '$(pool)'
-      vmImage: $(vmImage)
+      vmImage: ubuntu-latest
 
     workspace:
       clean: all
