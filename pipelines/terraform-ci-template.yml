@@ -260,7 +260,7 @@ jobs:
       condition: succeeded()
 
     - task: AzureCLI@2
-      displayName: 'Terraform destroy (${{ lower(parameters.destroy) }})'
+      displayName: 'Terraform destroy'
       name: destroy
       inputs:
         azureSubscription: '$(subscriptionConnection)'
@@ -287,13 +287,8 @@ jobs:
   - job: 'Teardown'
     dependsOn:
       - ${{ parameters.name }}
-    displayName: 'Tear down & Clean up (${{ lower(parameters.destroy) }})'
-    ${{ if eq(parameters.destroy, 'Always') }}:
-      condition: or(always(),canceled())
-    ${{ if eq(parameters.destroy, 'On failure') }}:
-      condition: not(eq(dependencies.${{ parameters.name }}.outputs['provisioningResult.result'],'success'))
-    ${{ if eq(parameters.destroy, 'On success') }}:
-      condition: eq(dependencies.${{ parameters.name }}.outputs['provisioningResult.result'],'success')
+    displayName: 'Tear down & Clean up'
+    condition: or(always(),canceled())
 
     variables:
       providerConfig: $[ dependencies.${{ parameters.name }}.outputs['providerConfig.content'] ]
