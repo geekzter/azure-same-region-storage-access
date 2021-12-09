@@ -9,6 +9,8 @@ parameters:
 #   - one
 #   - two
 
+name: $(Date:yyyyMMdd)$(Rev:.r)-${{ parameters.deploymentRegion }}
+
 trigger:
   branches:
     include:

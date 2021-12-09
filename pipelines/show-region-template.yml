@@ -15,8 +15,6 @@ parameters:
   type: string
   default: ''
 
-name: $(Date:yyyyMMdd)$(Rev:.r)-${{ parameters.deploymentRegion }}
-
 jobs:
 - job: ${{ parameters.name }}
   displayName: ${{ parameters.displayName }}
