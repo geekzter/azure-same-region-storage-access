@@ -92,22 +92,22 @@ jobs:
     unpinTerraform: false
     unpinTerraformProviders: ${{ parameters.unpinTerraformProviders }}
 
-# - template: terraform-ci-template.yml
-#   parameters:
-#     name: 'provisioning2'
-#     displayName: 'Attempt #1: Provisioning Azure Storage with Terraform'
-#     deploymentRegion: ${{ parameters.deploymentRegion }}
-#     workspace: ${{ parameters.workspace }}
-#     letMeIn: ${{ parameters.letMeIn }}
-#     clear: ${{ parameters.clear }}
-#     testReentrance: ${{ parameters.testReentrance }}
-#     unpinTerraform: false
-#     unpinTerraformProviders: ${{ parameters.unpinTerraformProviders }}
+- template: terraform-ci-template.yml
+  parameters:
+    name: 'provisioning2'
+    displayName: 'Attempt #2: Provisioning Azure Storage with Terraform'
+    deploymentRegion: ${{ parameters.deploymentRegion }}
+    workspace: ${{ parameters.workspace }}
+    letMeIn: ${{ parameters.letMeIn }}
+    clear: ${{ parameters.clear }}
+    testReentrance: ${{ parameters.testReentrance }}
+    unpinTerraform: false
+    unpinTerraformProviders: ${{ parameters.unpinTerraformProviders }}
 
 - job: 'Teardown'
   dependsOn:
     - provisioning1
-    # - provisioning2
+    - provisioning2
   displayName: 'Tear down & Clean up'
   condition: always()
 
