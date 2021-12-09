@@ -96,6 +96,7 @@ jobs:
   parameters:
     name: 'provisioning2'
     displayName: 'Attempt #2: Provisioning Azure Storage with Terraform'
+    precedingJob: 'provisioning1'
     deploymentRegion: ${{ parameters.deploymentRegion }}
     workspace: ${{ parameters.workspace }}
     letMeIn: ${{ parameters.letMeIn }}
