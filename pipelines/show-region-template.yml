@@ -8,17 +8,23 @@ parameters:
 - name: deploymentRegion
   displayName: Azure Storage Deployment Region
   type: string
-- name: precedingJobs
-  type: object
-  default: []
+# - name: precedingJobs
+#   type: object
+#   default: []
+- name: precedingJob
+  type: string
 
 jobs:
 - job: ${{ parameters.name }}
   displayName: ${{ parameters.displayName }}
-  ${{ if ne(length(parameters.precedingJobs),0) }}:  
-    dependsOn:
-      - ${{ each value in parameters.precedingJobs }}:
-        - ${{ value }}
+  # ${{ if ne(length(parameters.precedingJobs),0) }}:  
+  #   dependsOn:
+  #     - ${{ each value in parameters.precedingJobs }}:
+  #       - ${{ value }}
+  ${{ if ne(length(parameters.precedingJob),0) }}:  
+    dependsOn: ${{ parameters.precedingJob }}
+  # ${{ if ne(length(parameters.precedingJobs),0) }}:  
+  #   condition: 
   variables:
   - group: 'storage-access-ci'
   - name: 'scriptDirectory'
@@ -58,5 +64,5 @@ jobs:
       displayName: 'Runs if Agent is in deployment region'
       condition: eq(coalesce(variables['detectRegion.location'],'null'),'${{ parameters.deploymentRegion }}')
     - pwsh: Write-Host "Agent is in different location as deployment region ('${{ parameters.deploymentRegion }}')"       
-      displayName: 'Runs if Agent is in deployment region'
+      displayName: 'Runs if Agent is not in deployment region'
       condition: ne(coalesce(variables['detectRegion.location'],'null'),'${{ parameters.deploymentRegion }}')      
