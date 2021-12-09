@@ -24,6 +24,7 @@ jobs:
   #       - ${{ value }}
   ${{ if ne(length(parameters.precedingJob),0) }}:  
     dependsOn: ${{ parameters.precedingJob }}
+    condition: eq(dependencies.${{ parameters.precedingJob }}.outputs['detectRegion.location'],'${{ parameters.deploymentRegion }}')
   # ${{ if ne(length(parameters.precedingJobs),0) }}:  
   #   condition: 
   variables:
@@ -62,8 +63,8 @@ jobs:
       displayName: 'Show Azure VM instance info'
       workingDirectory: '$(scriptDirectory)'
     - pwsh: Write-Host "Agent is in same location as deployment region ('${{ parameters.deploymentRegion }}')"       
-      displayName: 'Runs if Agent is in deployment region'
+      displayName: 'Runs if Agent is in deployment region ${{ parameters.deploymentRegion }}'
       condition: eq(coalesce(variables['detectRegion.location'],'null'),'${{ parameters.deploymentRegion }}')
     - pwsh: Write-Host "Agent is in different location as deployment region ('${{ parameters.deploymentRegion }}')"       
-      displayName: 'Runs if Agent is not in deployment region'
+      displayName: 'Runs if Agent is not in deployment region ${{ parameters.deploymentRegion }}'
       condition: ne(coalesce(variables['detectRegion.location'],'null'),'${{ parameters.deploymentRegion }}')      
