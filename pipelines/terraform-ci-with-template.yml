@@ -161,11 +161,13 @@ jobs:
 
   - job: 'Teardown'
     dependsOn:
-      - provisioning1
-      - provisioning2
-      - provisioning3
-      - provisioning4
-      - provisioning5
+      # - provisioning1
+      # - provisioning2
+      # - provisioning3
+      # - provisioning4
+      # - provisioning5
+      - ${{ each index in [1,2] }}:
+        - provisioning${{ index }}
     displayName: 'Tear down & Clean up'
     condition: always()
 
