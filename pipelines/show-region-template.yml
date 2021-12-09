@@ -56,7 +56,7 @@ jobs:
       workingDirectory: '$(scriptDirectory)'
     - pwsh: Write-Host "Agent is in same location as deployment region ('${{ parameters.deploymentRegion }}')"       
       displayName: 'Runs if Agent is in deployment region'
-      condition: eq(coalesce(variables['detectRegion.location'],'null'),"${{ parameters.deploymentRegion }}")
+      condition: eq(coalesce(variables['detectRegion.location'],'null'),'${{ parameters.deploymentRegion }}')
     - pwsh: Write-Host "Agent is in different location as deployment region ('${{ parameters.deploymentRegion }}')"       
       displayName: 'Runs if Agent is in deployment region'
-      condition: ne(coalesce(variables['detectRegion.location'],'null'),"${{ parameters.deploymentRegion }}")      
+      condition: ne(coalesce(variables['detectRegion.location'],'null'),'${{ parameters.deploymentRegion }}')      
