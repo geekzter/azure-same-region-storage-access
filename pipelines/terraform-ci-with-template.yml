@@ -1,6 +1,10 @@
 parameters:
+- name: deploymentRegion
+  displayName: Azure Storage Deployment Region
+  type: string
+  default: eastus
 - name: workspace
-  displayName: Pipeline Environment / Terraform Workspace
+  displayName: Terraform Workspace
   type: string
   default: ci
   values:

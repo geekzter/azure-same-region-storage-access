@@ -1,6 +1,6 @@
 parameters:
 - name: workspace
-  displayName: Pipeline Environment / Terraform Workspace
+  displayName: Terraform Workspace
   type: string
   default: ci
   values:
