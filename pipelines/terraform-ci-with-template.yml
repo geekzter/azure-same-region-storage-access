@@ -95,7 +95,7 @@ jobs:
 - job: 'Teardown'
   dependsOn:
     - provisioning1
-  displayName: 'Tear down & Clean up }})'
+  displayName: 'Tear down & Clean up'
   condition: always()
 
   variables:
@@ -162,6 +162,10 @@ jobs:
         action: 'DeleteRG'
         resourceGroupName: '$(resourceGroup)'
 
+  - download: current
+    displayName: 'Download Terraform directory from provisioning job'
+    artifact: $(terraformArtifactName)
+
   - pwsh: |
       $terraformVersion = (Get-Content .terraform-version)
       Write-Host "##vso[task.setvariable variable=version;isOutput=true]${terraformVersion}"
@@ -175,10 +179,6 @@ jobs:
     displayName: 'Install terraform'
     inputs:
       terraformVersion: '$(terraformConfig.version)'
-
-  - download: current
-    displayName: 'Download Terraform directory from provisioning job'
-    artifact: $(terraformArtifactName)
 
   - task: TerraformCLI@0
     displayName: 'Terraform init'
