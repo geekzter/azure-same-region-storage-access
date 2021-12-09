@@ -50,3 +50,11 @@ jobs:
       # precedingJobs:
       # - job1
       precedingJob: job1
+  - template: show-region-template.yml
+    parameters:
+      name: 'job3'
+      displayName: 'Job 3'
+      deploymentRegion: ${{ parameters.deploymentRegion }}
+      # precedingJobs:
+      # - job1
+      precedingJob: job2
