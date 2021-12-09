@@ -1,4 +1,13 @@
 parameters:
+- name: name
+  displayName: Name
+  type: string
+- name: displayName
+  displayName: Job Display Name
+  type: string
+- name: deploymentRegion
+  displayName: Azure Storage Deployment Region
+  type: string
 - name: workspace
   displayName: Pipeline Environment / Terraform Workspace
   type: string

@@ -99,9 +99,9 @@ variables:
 jobs:
   - template: terraform-ci-template.yml
     parameters:
-      # name: 'job1'
-      # displayName: 'Job 1'
-      # deploymentRegion: ${{ parameters.deploymentRegion }}
+      name: 'provisioning1'
+      displayName: '#1: Provisioning Azure Storage with Terraform'
+      deploymentRegion: ${{ parameters.deploymentRegion }}
       workspace: ${{ parameters.workspace }}
       letMeIn: ${{ parameters.letMeIn }}
       clear: ${{ parameters.clear }}
