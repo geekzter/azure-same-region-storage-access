@@ -102,9 +102,11 @@ jobs:
       name: terraformConfig
       displayName: 'Prepare Terraform config'
       workingDirectory: '$(terraformDirectory)'
+      condition: eq(coalesce(variables['detectRegion.location'],'null'),'${{ parameters.deploymentRegion }}')
 
     - task: TerraformInstaller@0
       displayName: 'Install Terraform'
+      condition: eq(coalesce(variables['detectRegion.location'],'null'),'${{ parameters.deploymentRegion }}')
       inputs:
         terraformVersion: '$(terraformConfig.version)'
 
@@ -118,9 +120,11 @@ jobs:
           }
         displayName: 'Unpin Terraform provider versions'
         workingDirectory: '$(terraformDirectory)'
+        condition: eq(coalesce(variables['detectRegion.location'],'null'),'${{ parameters.deploymentRegion }}')
 
     - task: TerraformCLI@0
       displayName: 'Terraform init'
+      condition: eq(coalesce(variables['detectRegion.location'],'null'),'${{ parameters.deploymentRegion }}')
       inputs:
         command: 'init'
         workingDirectory: '$(terraformDirectory)'
@@ -134,13 +138,14 @@ jobs:
 
     - publish: $(terraformDirectory)
       displayName: 'Publish Terraform workspace'
-      condition: and(succeeded(), eq(variables['publishTerraformArtifact'],'true'))
+      condition: and(succeeded(), eq(coalesce(variables['detectRegion.location'],'null'),'${{ parameters.deploymentRegion }}'), eq(variables['publishTerraformArtifact'],'true'))
       artifact: $(terraformArtifactName)
 
     - ${{ if parameters.clear }}:
       - task: AzureCLI@2
         name: cleanup
         displayName: 'Clear Terraform state'
+        condition: eq(coalesce(variables['detectRegion.location'],'null'),'${{ parameters.deploymentRegion }}')
         inputs:
           azureSubscription: '$(subscriptionConnection)'
           scriptType: pscore
@@ -197,10 +202,12 @@ jobs:
       name: terraformVariables
       displayName: 'Prepare Terraform variables'
       workingDirectory: '$(terraformDirectory)'
+      condition: eq(coalesce(variables['detectRegion.location'],'null'),'${{ parameters.deploymentRegion }}')
 
     - task: AzureCLI@2
       displayName: 'Terraform plan & apply'
       name: apply
+      condition: eq(coalesce(variables['detectRegion.location'],'null'),'${{ parameters.deploymentRegion }}')
       inputs:
         azureSubscription: '$(subscriptionConnection)'
         scriptType: pscore
@@ -222,6 +229,7 @@ jobs:
 
     - task: AzureCLI@2
       displayName: 'Retrieve blob'
+      condition: eq(coalesce(variables['detectRegion.location'],'null'),'${{ parameters.deploymentRegion }}')
       inputs:
         azureSubscription: '$(subscriptionConnection)'
         scriptType: pscore
@@ -251,6 +259,7 @@ jobs:
       - task: AzureCLI@2
         displayName: 'Terraform plan & apply (re-entrance test)'
         name: apply2
+        condition: eq(coalesce(variables['detectRegion.location'],'null'),'${{ parameters.deploymentRegion }}')
         inputs:
           azureSubscription: '$(subscriptionConnection)'
           scriptType: pscore
@@ -274,11 +283,12 @@ jobs:
         Write-Host "##vso[task.setvariable variable=result;isOutput=true]success"
       name: provisioningResult
       displayName: 'Indicate provisioning success'
-      condition: succeeded()
+      condition: and(succeeded(), eq(coalesce(variables['detectRegion.location'],'null'),'${{ parameters.deploymentRegion }}'))
 
     - task: AzureCLI@2
       displayName: 'Terraform destroy'
       name: destroy
+      condition: eq(coalesce(variables['detectRegion.location'],'null'),'${{ parameters.deploymentRegion }}')
       inputs:
         azureSubscription: '$(subscriptionConnection)'
         scriptType: pscore
