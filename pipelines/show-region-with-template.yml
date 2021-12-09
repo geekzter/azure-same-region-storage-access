@@ -28,14 +28,6 @@ schedules:
     - main
 
 jobs:
-# - template: show-region-template.yml
-#   parameters:
-#     name: 'job1'
-#     displayName: 'Job 1'
-# - template: show-region-template.yml
-#   parameters:
-#     name: 'job2'
-#     displayName: 'Job 2'
 - ${{ each value in parameters.jobsList }}:
   - template: show-region-template.yml
     parameters:
