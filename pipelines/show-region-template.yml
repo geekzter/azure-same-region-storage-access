@@ -5,6 +5,9 @@ parameters:
 - name: displayName
   displayName: Job Display Name
   type: string
+- name: deploymentRegion
+  displayName: Azure Storage Deployment Region
+  type: string
 - name: precedingJobs
   type: object
   default: []
@@ -34,10 +37,26 @@ jobs:
           $DebugPreference = "Continue"
         }
         . ./functions.ps1
-        $vmMetadata = (Get-ComputeMetadata)
+        $vmMetadata = Get-ComputeMetadata
         Write-Host "`nAzure VM instance compute metadata for Job '${env:SYSTEM_JOBID}':"
         $vmMetadata | Format-List -Property AzurePublicCloud, location, name, osType, vmId, vmSize
+
+        $location = Get-AzureRegion
+        if ($location -ieq "${{ parameters.deploymentRegion }}") {
+          Write-Host "Agent is in same location as deployment region ('${{ parameters.deploymentRegion }}')"
+        } else {
+          Write-Host "Agent is in different location ($location) as deployment region (${{ parameters.deploymentRegion }})"
+        }
+        Write-Output "##vso[task.setvariable variable=location;isOutput=true]$location"
+
         $selfLink = "${env:SYSTEM_TASKDEFINITIONSURI}${env:SYSTEM_TEAMPROJECT}/_build/results?buildId=${env:BUILD_BUILDID}&view=logs&j=${env:SYSTEM_JOBID}&t=${env:SYSTEM_TASKINSTANCEID}"
         Write-Host "Link to this output: $selfLink"
+      name: detectRegion
       displayName: 'Show Azure VM instance info'
       workingDirectory: '$(scriptDirectory)'
+    - pwsh: Write-Host "Agent is in same location as deployment region ('${{ parameters.deploymentRegion }}')"       
+      displayName: 'Runs if Agent is in deployment region'
+      condition: eq(coalesce(variables['detectRegion.location'],'null'),${{ parameters.deploymentRegion }})
+    - pwsh: Write-Host "Agent is in different location as deployment region ('${{ parameters.deploymentRegion }}')"       
+      displayName: 'Runs if Agent is in deployment region'
+      condition: ne(coalesce(variables['detectRegion.location'],'null'),${{ parameters.deploymentRegion }})      

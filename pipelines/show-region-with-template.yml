@@ -1,4 +1,8 @@
-# parameters:
+parameters:
+- name: deploymentRegion
+  displayName: Azure Storage Deployment Region
+  type: string
+  default: westeurope
 # - name: jobsList
 #   type: object
 #   default:
@@ -37,9 +41,11 @@ jobs:
     parameters:
       name: 'job1'
       displayName: 'Job 1'
+      deploymentRegion: ${{ parameters.deploymentRegion }}
   - template: show-region-template.yml
     parameters:
       name: 'job2'
       displayName: 'Job 2'
+      deploymentRegion: ${{ parameters.deploymentRegion }}
       precedingJobs:
       - job1
