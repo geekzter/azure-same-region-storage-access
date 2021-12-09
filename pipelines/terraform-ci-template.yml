@@ -28,15 +28,6 @@ parameters:
   displayName: Clear State
   type: boolean
   default: false
-- name: destroy
-  displayName: Destroy Infrastructure
-  type: string
-  default: Always
-  values:
-  - Always
-  - Never 
-  - 'On failure'
-  - 'On success'
 - name: testReentrance
   displayName: Test Terraform re-entrance (apply twice)
   type: boolean
@@ -51,15 +42,8 @@ parameters:
   default: false
 
 jobs:
-- job: 'Provision'
-  ${{ if eq(parameters.destroy, 'Always') }}:
-    displayName: 'Provision (${{ parameters.workspace }}) & Destroy'
-  ${{ if eq(parameters.destroy, 'Never') }}:
-    displayName: 'Provision (${{ parameters.workspace }})'
-  ${{ if eq(parameters.destroy, 'On failure') }}:
-    displayName: 'Provision (${{ parameters.workspace }}) & Destroy (${{ lower(parameters.destroy) }})'
-  ${{ if eq(parameters.destroy, 'On success') }}:
-    displayName: 'Provision (${{ parameters.workspace }}) & Destroy (${{ lower(parameters.destroy) }})'
+- job: ${{ parameters.name }}
+  displayName: '${{ parameters.displayName }}'
   condition: succeeded()
 
   pool:
@@ -131,11 +115,10 @@ jobs:
         backendAzureRmKey: 'terraform.tfstate'
         allowTelemetryCollection: true
 
-    - ${{ if ne(parameters.destroy, 'Never') }}:
-      - publish: $(terraformDirectory)
-        displayName: 'Publish Terraform workspace'
-        condition: and(succeeded(), eq(variables['publishTerraformArtifact'],'true'))
-        artifact: $(terraformArtifactName)
+    - publish: $(terraformDirectory)
+      displayName: 'Publish Terraform workspace'
+      condition: and(succeeded(), eq(variables['publishTerraformArtifact'],'true'))
+      artifact: $(terraformArtifactName)
 
     - ${{ if parameters.clear }}:
       - task: AzureCLI@2
@@ -270,57 +253,55 @@ jobs:
           failOnStandardError: true
           workingDirectory: '$(scriptDirectory)'
 
-    - ${{ if not(eq(parameters.destroy, 'Never')) }}:
-      - pwsh: |
-          Write-Host "##vso[task.setvariable variable=result;isOutput=true]success"
-        name: provisioningResult
-        displayName: 'Indicate provisioning success'
-        condition: succeeded()
+    - pwsh: |
+        Write-Host "##vso[task.setvariable variable=result;isOutput=true]success"
+      name: provisioningResult
+      displayName: 'Indicate provisioning success'
+      condition: succeeded()
 
-    - ${{ if not(eq(parameters.destroy, 'Never')) }}:
-      - task: AzureCLI@2
-        displayName: 'Terraform destroy (${{ lower(parameters.destroy) }})'
-        name: destroy
-        inputs:
-          azureSubscription: '$(subscriptionConnection)'
-          scriptType: pscore
-          scriptLocation: inlineScript
-          inlineScript: |
-            # Propagate pipeline Service Principal as Terraform variables
-            $env:ARM_CLIENT_ID       ??= $env:servicePrincipalId
-            $env:ARM_CLIENT_SECRET   ??= $env:servicePrincipalKey
-            $env:ARM_TENANT_ID       ??= $env:tenantId
-            # Get from Azure CLI context
-            $env:ARM_TENANT_ID       ??= $(az account show --query tenantId -o tsv)
-            $env:ARM_SUBSCRIPTION_ID ??= $(az account show --query id -o tsv)
+    - task: AzureCLI@2
+      displayName: 'Terraform destroy (${{ lower(parameters.destroy) }})'
+      name: destroy
+      inputs:
+        azureSubscription: '$(subscriptionConnection)'
+        scriptType: pscore
+        scriptLocation: inlineScript
+        inlineScript: |
+          # Propagate pipeline Service Principal as Terraform variables
+          $env:ARM_CLIENT_ID       ??= $env:servicePrincipalId
+          $env:ARM_CLIENT_SECRET   ??= $env:servicePrincipalKey
+          $env:ARM_TENANT_ID       ??= $env:tenantId
+          # Get from Azure CLI context
+          $env:ARM_TENANT_ID       ??= $(az account show --query tenantId -o tsv)
+          $env:ARM_SUBSCRIPTION_ID ??= $(az account show --query id -o tsv)
 
-            ./deploy.ps1 -destroy -force -SkipFirewallUpdate:$${{ not(parameters.letMeIn) }}
-          addSpnToEnvironment: true
-          useGlobalConfig: true
-          failOnStandardError: true
-          workingDirectory: '$(scriptDirectory)'
+          ./deploy.ps1 -destroy -force -SkipFirewallUpdate:$${{ not(parameters.letMeIn) }}
+        addSpnToEnvironment: true
+        useGlobalConfig: true
+        failOnStandardError: true
+        workingDirectory: '$(scriptDirectory)'
 
 
 - ${{ if ne(parameters.destroy, 'Never') }}:
   # Clean up resources, in the event 'terraform destroy' fails   
   - job: 'Teardown'
     dependsOn:
-      - Provision
+      - ${{ parameters.name }}
     displayName: 'Tear down & Clean up (${{ lower(parameters.destroy) }})'
     ${{ if eq(parameters.destroy, 'Always') }}:
       condition: or(always(),canceled())
     ${{ if eq(parameters.destroy, 'On failure') }}:
-      condition: not(eq(dependencies.Provision.outputs['provisioningResult.result'],'success'))
+      condition: not(eq(dependencies.${{ parameters.name }}.outputs['provisioningResult.result'],'success'))
     ${{ if eq(parameters.destroy, 'On success') }}:
-      condition: eq(dependencies.Provision.outputs['provisioningResult.result'],'success')
+      condition: eq(dependencies.${{ parameters.name }}.outputs['provisioningResult.result'],'success')
 
     variables:
-      providerConfig: $[ dependencies.Provision.outputs['providerConfig.content'] ]
+      providerConfig: $[ dependencies.${{ parameters.name }}.outputs['providerConfig.content'] ]
       terraformDirectory: $(Pipeline.Workspace)/$(terraformArtifactName)
       ${{ if not(parameters.unpinTerraformProviders) }}:
-        terraformVersion: $[ dependencies.Provision.outputs['terraformConfig.version'] ]
+        terraformVersion: $[ dependencies.${{ parameters.name }}.outputs['terraformConfig.version'] ]
       ${{ if parameters.unpinTerraformProviders }}:
-        terraformVersion: $[ dependencies.Provision.outputs['pinTerraformProviders.terraformConfig.version'] ]
+        terraformVersion: $[ dependencies.${{ parameters.name }}.outputs['pinTerraformProviders.terraformConfig.version'] ]
 
     pool:
       vmImage: ubuntu-latest
