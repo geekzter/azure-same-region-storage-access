@@ -24,7 +24,8 @@ jobs:
   #       - ${{ value }}
   ${{ if ne(length(parameters.precedingJob),0) }}:  
     dependsOn: ${{ parameters.precedingJob }}
-    condition: eq(dependencies.${{ parameters.precedingJob }}.outputs['detectRegion.location'],'${{ parameters.deploymentRegion }}')
+    # condition: eq(dependencies.${{ parameters.precedingJob }}.outputs['detectRegion.location'],'${{ parameters.deploymentRegion }}')
+    condition: not(containsValue(dependencies.*.outputs['detectRegion.sameRegion'], 'false'))
   # ${{ if ne(length(parameters.precedingJobs),0) }}:  
   #   condition: 
   variables:
@@ -52,8 +53,10 @@ jobs:
         $location = Get-AzureRegion
         if ($location -ieq "${{ parameters.deploymentRegion }}") {
           Write-Host "Agent is in same location as deployment region ('${{ parameters.deploymentRegion }}')"
+          Write-Output "##vso[task.setvariable variable=sameRegion;isOutput=true]true"
         } else {
           Write-Host "Agent is in different location ($location) as deployment region (${{ parameters.deploymentRegion }})"
+          Write-Output "##vso[task.setvariable variable=sameRegion;isOutput=true]false"
         }
         Write-Output "##vso[task.setvariable variable=location;isOutput=true]$location"
 

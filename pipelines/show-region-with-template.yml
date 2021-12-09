@@ -3,11 +3,6 @@ parameters:
   displayName: Azure Storage Deployment Region
   type: string
   default: eastus
-# - name: jobsList
-#   type: object
-#   default:
-#   - one
-#   - two
 
 name: $(Date:yyyyMMdd)$(Rev:.r)-${{ parameters.deploymentRegion }}
 
@@ -34,11 +29,6 @@ schedules:
     - main
 
 jobs:
-# - ${{ each value in parameters.jobsList }}:
-#   - template: show-region-template.yml
-#     parameters:
-#       name: 'job${{ value }}'
-#       displayName: 'Job ${{ value }}'
   - template: show-region-template.yml
     parameters:
       name: 'job1'
@@ -49,14 +39,10 @@ jobs:
       name: 'job2'
       displayName: 'Job 2'
       deploymentRegion: ${{ parameters.deploymentRegion }}
-      # precedingJobs:
-      # - job1
       precedingJob: job1
   - template: show-region-template.yml
     parameters:
       name: 'job3'
       displayName: 'Job 3'
       deploymentRegion: ${{ parameters.deploymentRegion }}
-      # precedingJobs:
-      # - job1
       precedingJob: job2
