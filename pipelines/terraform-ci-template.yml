@@ -52,7 +52,6 @@ parameters:
   values:
   - No
   - Yes
-  - Strategy
 
 jobs:
 - job: 'Provision'
@@ -68,19 +67,6 @@ jobs:
 
   pool:
     vmImage: ubuntu-latest
-
-  ${{ if or(eq(parameters.unpinTerraformProviders, 'Strategy'),not(eq(variables['Build.Reason'], 'Manual'))) }}:
-    strategy:
-      matrix:
-        pinTerraformProviders:
-          publishTerraformArtifact: true
-          TF_VAR_resource_suffix: '$(Build.BuildId)p'
-          unpinTerraformProviders: false
-        unpinTerraformProviders:
-          publishTerraformArtifact: false
-          TF_VAR_resource_suffix: '$(Build.BuildId)u'
-          unpinTerraformProviders: true
-      maxParallel: 1
 
   variables:
     ${{ if not(or(eq(parameters.unpinTerraformProviders, 'Strategy'),not(eq(variables['Build.Reason'], 'Manual')))) }}:
