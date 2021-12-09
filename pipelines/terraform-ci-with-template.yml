@@ -89,7 +89,7 @@ jobs:
     letMeIn: ${{ parameters.letMeIn }}
     clear: ${{ parameters.clear }}
     testReentrance: ${{ parameters.testReentrance }}
-    unpinTerraform: ${{ parameters.unpinTerraform }}
+    unpinTerraform: false
     unpinTerraformProviders: ${{ parameters.unpinTerraformProviders }}
 
 - job: 'Teardown'
