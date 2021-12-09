@@ -31,6 +31,20 @@ parameters:
   displayName: Unpin Terraform provider versions
   type: boolean
   default: false
+# - name: iterator # Dummy parameter so we can create a loop
+#   displayName: Iterator - don't modify
+#   type: object
+#   default: 
+#   - 1
+#   - 2
+#   - 3
+#   - 4
+#   - 5
+#   - 6
+#   - 7
+#   - 8
+#   - 9
+#   - 10
 
 name: $(Date:yyyyMMdd)$(Rev:.r)-${{ parameters.workspace }}-${{ parameters.deploymentRegion }}
 
@@ -80,11 +94,25 @@ variables:
   value: 'storage-access-$(TF_WORKSPACE)-$(TF_VAR_resource_suffix)'
 
 jobs:
-- ${{ each index in [1,2] }}:
+# - ${{ each index in parameters.iterator }}:
+#   - template: terraform-ci-template.yml
+#     parameters:
+#       name: 'provisioning${{ index }}'
+#       displayName: 'Attempt #${{ index }}: Provisioning Azure Storage with Terraform'
+#       deploymentRegion: ${{ parameters.deploymentRegion }}
+#       workspace: ${{ parameters.workspace }}
+#       letMeIn: ${{ parameters.letMeIn }}
+#       clear: ${{ parameters.clear }}
+#       testReentrance: ${{ parameters.testReentrance }}
+#       unpinTerraform: false
+#       unpinTerraformProviders: ${{ parameters.unpinTerraformProviders }}
+#       ${{ if ne(index,1) }}':
+#         precedingJob: 'provisioning${{ index-1 }}'
+
   - template: terraform-ci-template.yml
     parameters:
-      name: 'provisioning${{ index }}'
-      displayName: 'Attempt #${{ index }}: Provisioning Azure Storage with Terraform'
+      name: 'provisioning1'
+      displayName: 'Attempt #1: Provisioning Azure Storage with Terraform'
       deploymentRegion: ${{ parameters.deploymentRegion }}
       workspace: ${{ parameters.workspace }}
       letMeIn: ${{ parameters.letMeIn }}
@@ -92,82 +120,68 @@ jobs:
       testReentrance: ${{ parameters.testReentrance }}
       unpinTerraform: false
       unpinTerraformProviders: ${{ parameters.unpinTerraformProviders }}
-      ${{ if ne(index,1) }}':
-        precedingJob: 'provisioning${{ index-1 }}'
 
-  # - template: terraform-ci-template.yml
-  #   parameters:
-  #     name: 'provisioning1'
-  #     displayName: 'Attempt #1: Provisioning Azure Storage with Terraform'
-  #     deploymentRegion: ${{ parameters.deploymentRegion }}
-  #     workspace: ${{ parameters.workspace }}
-  #     letMeIn: ${{ parameters.letMeIn }}
-  #     clear: ${{ parameters.clear }}
-  #     testReentrance: ${{ parameters.testReentrance }}
-  #     unpinTerraform: false
-  #     unpinTerraformProviders: ${{ parameters.unpinTerraformProviders }}
+  - template: terraform-ci-template.yml
+    parameters:
+      name: 'provisioning2'
+      displayName: 'Attempt #2: Provisioning Azure Storage with Terraform'
+      precedingJob: 'provisioning1'
+      deploymentRegion: ${{ parameters.deploymentRegion }}
+      workspace: ${{ parameters.workspace }}
+      letMeIn: ${{ parameters.letMeIn }}
+      clear: ${{ parameters.clear }}
+      testReentrance: ${{ parameters.testReentrance }}
+      unpinTerraform: false
+      unpinTerraformProviders: ${{ parameters.unpinTerraformProviders }}
 
-  # - template: terraform-ci-template.yml
-  #   parameters:
-  #     name: 'provisioning2'
-  #     displayName: 'Attempt #2: Provisioning Azure Storage with Terraform'
-  #     precedingJob: 'provisioning1'
-  #     deploymentRegion: ${{ parameters.deploymentRegion }}
-  #     workspace: ${{ parameters.workspace }}
-  #     letMeIn: ${{ parameters.letMeIn }}
-  #     clear: ${{ parameters.clear }}
-  #     testReentrance: ${{ parameters.testReentrance }}
-  #     unpinTerraform: false
-  #     unpinTerraformProviders: ${{ parameters.unpinTerraformProviders }}
+  - template: terraform-ci-template.yml
+    parameters:
+      name: 'provisioning3'
+      displayName: 'Attempt #3: Provisioning Azure Storage with Terraform'
+      precedingJob: 'provisioning2'
+      deploymentRegion: ${{ parameters.deploymentRegion }}
+      workspace: ${{ parameters.workspace }}
+      letMeIn: ${{ parameters.letMeIn }}
+      clear: ${{ parameters.clear }}
+      testReentrance: ${{ parameters.testReentrance }}
+      unpinTerraform: false
+      unpinTerraformProviders: ${{ parameters.unpinTerraformProviders }}
 
-  # - template: terraform-ci-template.yml
-  #   parameters:
-  #     name: 'provisioning3'
-  #     displayName: 'Attempt #3: Provisioning Azure Storage with Terraform'
-  #     precedingJob: 'provisioning2'
-  #     deploymentRegion: ${{ parameters.deploymentRegion }}
-  #     workspace: ${{ parameters.workspace }}
-  #     letMeIn: ${{ parameters.letMeIn }}
-  #     clear: ${{ parameters.clear }}
-  #     testReentrance: ${{ parameters.testReentrance }}
-  #     unpinTerraform: false
-  #     unpinTerraformProviders: ${{ parameters.unpinTerraformProviders }}
+  - template: terraform-ci-template.yml
+    parameters:
+      name: 'provisioning4'
+      displayName: 'Attempt #4: Provisioning Azure Storage with Terraform'
+      precedingJob: 'provisioning3'
+      deploymentRegion: ${{ parameters.deploymentRegion }}
+      workspace: ${{ parameters.workspace }}
+      letMeIn: ${{ parameters.letMeIn }}
+      clear: ${{ parameters.clear }}
+      testReentrance: ${{ parameters.testReentrance }}
+      unpinTerraform: false
+      unpinTerraformProviders: ${{ parameters.unpinTerraformProviders }}
 
-  # - template: terraform-ci-template.yml
-  #   parameters:
-  #     name: 'provisioning4'
-  #     displayName: 'Attempt #4: Provisioning Azure Storage with Terraform'
-  #     precedingJob: 'provisioning3'
-  #     deploymentRegion: ${{ parameters.deploymentRegion }}
-  #     workspace: ${{ parameters.workspace }}
-  #     letMeIn: ${{ parameters.letMeIn }}
-  #     clear: ${{ parameters.clear }}
-  #     testReentrance: ${{ parameters.testReentrance }}
-  #     unpinTerraform: false
-  #     unpinTerraformProviders: ${{ parameters.unpinTerraformProviders }}
-
-  # - template: terraform-ci-template.yml
-  #   parameters:
-  #     name: 'provisioning5'
-  #     displayName: 'Attempt #5: Provisioning Azure Storage with Terraform'
-  #     precedingJob: 'provisioning4'
-  #     deploymentRegion: ${{ parameters.deploymentRegion }}
-  #     workspace: ${{ parameters.workspace }}
-  #     letMeIn: ${{ parameters.letMeIn }}
-  #     clear: ${{ parameters.clear }}
-  #     testReentrance: ${{ parameters.testReentrance }}
-  #     unpinTerraform: false
-  #     unpinTerraformProviders: ${{ parameters.unpinTerraformProviders }}
+  - template: terraform-ci-template.yml
+    parameters:
+      name: 'provisioning5'
+      displayName: 'Attempt #5: Provisioning Azure Storage with Terraform'
+      precedingJob: 'provisioning4'
+      deploymentRegion: ${{ parameters.deploymentRegion }}
+      workspace: ${{ parameters.workspace }}
+      letMeIn: ${{ parameters.letMeIn }}
+      clear: ${{ parameters.clear }}
+      testReentrance: ${{ parameters.testReentrance }}
+      unpinTerraform: false
+      unpinTerraformProviders: ${{ parameters.unpinTerraformProviders }}
 
   - job: 'Teardown'
     dependsOn:
-      # - provisioning1
-      # - provisioning2
-      # - provisioning3
-      # - provisioning4
-      # - provisioning5
-      - ${{ each index in [1,2] }}:
-        - provisioning${{ index }}
+      - provisioning1
+      - provisioning2
+      - provisioning3
+      - provisioning4
+      - provisioning5
+      # - ${{ each index in parameters.iterator }}:
+      #   - provisioning${{ index }}
     displayName: 'Tear down & Clean up'
     condition: always()
 
