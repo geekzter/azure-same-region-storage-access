@@ -71,6 +71,31 @@ schedules:
     include:
     - main
 
+variables:
+- group: 'storage-access-ci'
+- name: 'repository'
+  value: 'azure-same-region-storage-access'
+- name: AZURE_EXTENSION_USE_DYNAMIC_INSTALL
+  value: 'yes_without_prompt'
+- name: 'TF_IN_AUTOMATION'
+  value: 'true'
+- name: 'TF_INPUT'
+  value: 0
+- name: 'TF_WORKSPACE'
+  value: ${{ parameters.workspace }}
+- name: 'scriptDirectory'
+  value: '$(Build.SourcesDirectory)/scripts'
+- name: 'terraformArtifactName'
+  value: 'terraform'
+- name: 'terraformDirectory'
+  value: '$(Build.SourcesDirectory)/terraform'
+- name: 'TF_VAR_resource_prefix'
+  value: 'storage-access'
+- name: 'TF_VAR_run_id'
+  value: '$(Build.BuildId)'
+- name: 'resourceGroup' 
+  value: 'storage-access-$(TF_WORKSPACE)-$(TF_VAR_resource_suffix)'
+
 jobs:
   - template: terraform-ci-template.yml
     parameters:
