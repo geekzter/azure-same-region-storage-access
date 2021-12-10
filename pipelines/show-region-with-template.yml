@@ -1,0 +1,90 @@
+parameters:
+- name: deploymentRegion
+  displayName: Azure Storage Deployment Region
+  type: string
+  default: australiasoutheast
+
+name: $(Date:yyyyMMdd)$(Rev:.r)-${{ parameters.deploymentRegion }}
+
+trigger:
+  branches:
+    include:
+    - '*'
+pr:
+  branches:
+    include:
+    - '*'
+  paths:
+    exclude:
+    - '.devcontainer/**'  
+    - 'visuals/**'  
+    - '*.md'  
+
+schedules:
+- cron: '0 23 * * *'
+  displayName: 'Nightly build (UTC)'
+  always: 'true'
+  branches:
+    include:
+    - main
+
+jobs:
+  - template: show-region-template.yml
+    parameters:
+      name: 'job1'
+      displayName: 'Job 1'
+      deploymentRegion: ${{ parameters.deploymentRegion }}
+  - template: show-region-template.yml
+    parameters:
+      name: 'job2'
+      displayName: 'Job 2'
+      deploymentRegion: ${{ parameters.deploymentRegion }}
+      precedingJob: job1
+  - template: show-region-template.yml
+    parameters:
+      name: 'job3'
+      displayName: 'Job 3'
+      deploymentRegion: ${{ parameters.deploymentRegion }}
+      precedingJob: job2
+  - template: show-region-template.yml
+    parameters:
+      name: 'job4'
+      displayName: 'Job 4'
+      deploymentRegion: ${{ parameters.deploymentRegion }}
+      precedingJob: job3
+  - template: show-region-template.yml
+    parameters:
+      name: 'job5'
+      displayName: 'Job 5'
+      deploymentRegion: ${{ parameters.deploymentRegion }}
+      precedingJob: job4
+  - template: show-region-template.yml
+    parameters:
+      name: 'job6'
+      displayName: 'Job 6'
+      deploymentRegion: ${{ parameters.deploymentRegion }}
+      precedingJob: job5
+  - template: show-region-template.yml
+    parameters:
+      name: 'job7'
+      displayName: 'Job 7'
+      deploymentRegion: ${{ parameters.deploymentRegion }}
+      precedingJob: job6
+  - template: show-region-template.yml
+    parameters:
+      name: 'job8'
+      displayName: 'Job 8'
+      deploymentRegion: ${{ parameters.deploymentRegion }}
+      precedingJob: job7
+  - template: show-region-template.yml
+    parameters:
+      name: 'job9'
+      displayName: 'Job 9'
+      deploymentRegion: ${{ parameters.deploymentRegion }}
+      precedingJob: job8
+  - template: show-region-template.yml
+    parameters:
+      name: 'job10'
+      displayName: 'Job 10'
+      deploymentRegion: ${{ parameters.deploymentRegion }}
+      precedingJob: job9

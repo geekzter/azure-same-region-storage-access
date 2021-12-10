@@ -19,12 +19,13 @@ param (
     [parameter(Mandatory=$false,HelpMessage="Perform Terraform plan stage")][switch]$Plan=$false,
     [parameter(Mandatory=$false,HelpMessage="Perform Terraform validate stage")][switch]$Validate=$false,
     [parameter(Mandatory=$false,HelpMessage="Perform Terraform apply stage (implies plan)")][switch]$Apply=$false,
+    [parameter(Mandatory=$false,HelpMessage="Validate storage access")][switch]$Test=$false,
     [parameter(Mandatory=$false,HelpMessage="Perform Terraform destroy stage")][switch]$Destroy=$false,
     [parameter(Mandatory=$false,HelpMessage="Show Terraform output variables")][switch]$Output=$false,
     [parameter(Mandatory=$false,HelpMessage="Don't show prompts unless something get's deleted that should not be")][switch]$Force=$false,
     [parameter(Mandatory=$false,HelpMessage="Initialize Terraform backend, upgrade modules & provider")][switch]$Upgrade=$false,
     [parameter(Mandatory=$false,HelpMessage="Don't try to set up a Terraform backend if it does not exist")][switch]$NoBackend=$false,
-    [parameter(Mandatory=$false,HelpMessage="Skip pre-plan Storage Firewall update")][switch]$SkipFirewallUpdate=$false
+    [parameter(Mandatory=$false,HelpMessage="Open Storage Firewall pre-plan")][switch]$OpenStorageFirewall=$false
 ) 
 
 ### Internal Functions
@@ -123,10 +124,17 @@ try {
     }
 
     if ($Plan -or $Apply -or $Destroy) {
-        $env:TF_VAR_location ??= Show-AzureRegion
+        # Convert uppercased Terraform environment variables (Azure Pipeline Agent) to their original casing expected by Terraform
+        foreach ($tfvar in $(Get-ChildItem -Path Env: -Recurse -Include TF_VAR_*)) {
+            $prefix = (($tfvar.Name.Split("_")[0,1] | Select-Object -First 2) -Join "_")
+            $properCaseName = $prefix + $tfvar.Name.Replace($prefix,"").ToLowerInvariant()
+            Invoke-Expression "`$env:$properCaseName = `$env:$($tfvar.Name)"  
+        } 
+
+        $env:TF_VAR_location ??= Get-AzureRegion
         Write-Host "Using $env:TF_VAR_location as deployment target"
 
-        if (!$SkipFirewallUpdate) {
+        if ($OpenStorageFirewall) {
             # ISSUE: If a pipeline agent or Codespace is located in the same region as a storage account the request will be routed over Microsoft’s internal IPv6 network. As a result the source IP of the request is not the same as the one added to the Storage Account firewall.
             # 1.0;2020-05-17T13:22:59.2714021Z;GetContainerProperties;IpAuthorizationError;403;4;4;authenticated;xxxxxx;xxxxxx;blob;"https://xxxxxx.blob.core.windows.net:443/paasappscripts?restype=container";"/";75343457-f01e-005c-674e-2c705c000000;0;172.16.5.4:59722;2018-11-09;453;0;130;246;0;;;;;;"Go/go1.14.2 (amd64-linux) go-autorest/v14.0.0 tombuildsstuff/giovanni/v0.10.0 storage/2018-11-09";;
             # HACK: Open the door, Terraform will close it again
@@ -174,12 +182,18 @@ try {
 
     if ($Output) {
         Invoke "terraform output"
-    }
+    }    
 
     if (($Apply -or $Output) -and $pipeline) {
         # Export Terraform output as Pipeline output variables for subsequent tasks
         Set-PipelineVariablesFromTerraform
     }    
+
+    if ($Test) {
+        $testScript = (Join-Path $PSScriptRoot "validate_storage_access.ps1")
+        Write-Information "Invoking ${testScript}"
+        & $testScript
+    }
 
     if ($Destroy) {
         Invoke "terraform destroy $varArgs $forceArgs"

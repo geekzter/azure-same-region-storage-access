@@ -26,8 +26,7 @@ resource azurerm_role_assignment tf_data_owner {
   count                        = var.data_owner_object_id != null ? 1 : 0
 }
 resource azurerm_storage_account_network_rules app_storage {
-  resource_group_name          = var.resource_group_name
-  storage_account_name         = azurerm_storage_account.app_storage.name
+  storage_account_id           = azurerm_storage_account.app_storage.id
   bypass                       = ["None"]
   default_action               = "Deny"
   ip_rules                     = var.admin_ips

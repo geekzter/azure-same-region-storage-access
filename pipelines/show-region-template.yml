@@ -1,0 +1,78 @@
+parameters:
+- name: name
+  displayName: Name
+  type: string
+- name: displayName
+  displayName: Job Display Name
+  type: string
+- name: deploymentRegion
+  displayName: Azure Storage Deployment Region
+  type: string
+# - name: precedingJobs
+#   type: object
+#   default: []
+- name: precedingJob
+  type: string
+  default: ''
+
+jobs:
+- job: ${{ parameters.name }}
+  displayName: ${{ parameters.displayName }}
+  # ${{ if ne(length(parameters.precedingJobs),0) }}:  
+  #   dependsOn:
+  #     - ${{ each value in parameters.precedingJobs }}:
+  #       - ${{ value }}
+  ${{ if ne(length(parameters.precedingJob),0) }}:  
+    dependsOn: ${{ parameters.precedingJob }}
+    condition: eq(dependencies.${{ parameters.precedingJob }}.outputs['detectRegion.location'],'${{ parameters.deploymentRegion }}') # Same region, try again
+    # condition: eq(dependencies.${{ parameters.precedingJob }}.outputs['detectRegion.sameRegion'],'true') # Same region, try again
+    # condition: ne(dependencies.${{ parameters.precedingJob }}.outputs['detectRegion.sameRegion'],'false')
+    # condition: not(containsValue(dependencies.*.outputs['detectRegion.sameRegion'], 'false'))
+  # ${{ if ne(length(parameters.precedingJobs),0) }}:  
+  #   condition: 
+  variables:
+  - group: 'storage-access-ci'
+  - name: 'scriptDirectory'
+    value: '$(Build.SourcesDirectory)/scripts'
+  pool:
+    name: '$(pool)'
+    vmImage: $(vmImage)
+  steps:
+    - pwsh: |
+        Get-Item Env:* | Sort-Object -Property Name
+      displayName: 'List environment variables'
+    - pwsh: |
+        if ($env:SYSTEM_DEBUG -eq "true") {
+          $InformationPreference = "Continue"
+          $VerbosePreference = "Continue"
+          $DebugPreference = "Continue"
+        }
+        . ./functions.ps1
+        $vmMetadata = Get-ComputeMetadata
+        Write-Host "`nAzure VM instance compute metadata for Job '${env:SYSTEM_JOBID}':"
+        $vmMetadata | Format-List -Property AzurePublicCloud, location, name, osType, vmId, vmSize
+
+        $location = Get-AzureRegion
+        if ($location -ieq "${{ parameters.deploymentRegion }}") {
+          Write-Host "Agent is in same location as deployment region ('${{ parameters.deploymentRegion }}')"
+          Write-Output "##vso[task.setvariable variable=sameRegion;isOutput=true]true"
+        } else {
+          Write-Host "Agent is in different location ($location) as deployment region (${{ parameters.deploymentRegion }})"
+          Write-Output "##vso[task.setvariable variable=sameRegion;isOutput=true]false"
+        }
+        Write-Output "##vso[task.setvariable variable=location;isOutput=true]$location"
+
+        Write-Host "`nAzure VM IP location info for Job '${env:SYSTEM_JOBID}':"
+        Invoke-RestMethod https://ipinfo.io/json | Format-List
+
+        $selfLink = "${env:SYSTEM_TASKDEFINITIONSURI}${env:SYSTEM_TEAMPROJECT}/_build/results?buildId=${env:BUILD_BUILDID}&view=logs&j=${env:SYSTEM_JOBID}&t=${env:SYSTEM_TASKINSTANCEID}"
+        Write-Host "Link to this output: $selfLink"
+      name: detectRegion
+      displayName: 'Show Azure VM instance info'
+      workingDirectory: '$(scriptDirectory)'
+    - pwsh: Write-Host "Agent is in same location as deployment region ('${{ parameters.deploymentRegion }}')"       
+      displayName: 'Runs if Agent is in deployment region ${{ parameters.deploymentRegion }}'
+      condition: eq(coalesce(variables['detectRegion.location'],'null'),'${{ parameters.deploymentRegion }}')
+    - pwsh: Write-Host "Agent is in different location as deployment region ('${{ parameters.deploymentRegion }}')"       
+      displayName: 'Runs if Agent is not in deployment region ${{ parameters.deploymentRegion }}'
+      condition: ne(coalesce(variables['detectRegion.location'],'null'),'${{ parameters.deploymentRegion }}')      

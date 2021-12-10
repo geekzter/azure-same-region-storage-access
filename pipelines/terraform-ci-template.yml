@@ -1,0 +1,340 @@
+parameters:
+- name: name
+  displayName: Name
+  type: string
+- name: displayName
+  displayName: Job Display Name
+  type: string
+- name: deploymentRegion
+  displayName: Azure Storage Deployment Region
+  type: string
+- name: workspace
+  displayName: Pipeline Environment / Terraform Workspace
+  type: string
+  default: ci
+  values:
+  - ci
+  - ci1
+  - ci2
+  - ci3
+  - cd1
+  - cd2
+  - cd3
+- name: mode
+  displayName: Mode
+  type: string
+  values:
+  - ReproduceConstraint 
+  - MitigateWithJITFWUpdate
+  - TryMitigateWithRegion
+- name: clear
+  displayName: Clear State
+  type: boolean
+  default: false
+- name: testReentrance
+  displayName: Test Terraform re-entrance (apply twice)
+  type: boolean
+  default: true
+- name: destroy
+  displayName: Destroy Infrastructure
+  type: string
+  values:
+  - Always
+  - Never 
+  - 'On failure'
+  - 'On success'
+- name: unpinTerraform
+  displayName: Unpin Terraform version
+  type: boolean
+  default: false
+- name: unpinTerraformProviders
+  displayName: Unpin Terraform provider versions
+  type: boolean
+  default: false
+- name: precedingJob
+  type: string
+  default: ''
+
+jobs:
+- job: ${{ parameters.name }}
+  displayName: '${{ parameters.displayName }}'
+  ${{ if ne(length(parameters.precedingJob),0) }}:  
+    dependsOn: ${{ parameters.precedingJob }}
+    condition: eq(dependencies.${{ parameters.precedingJob }}.outputs['detectRegion.location'],'${{ parameters.deploymentRegion }}') # Same region, try again
+
+  pool:
+    vmImage: ubuntu-latest
+
+  variables:
+    ${{ if parameters.clear }}:  # Don't reset suffix if we want to keep existing resources
+      TF_VAR_resource_suffix: '$(Build.BuildId)'
+    publishTerraformArtifact: true
+    resourceGroup: '$(TF_VAR_resource_prefix)-$(TF_WORKSPACE)-$(TF_VAR_resource_suffix)'
+
+  workspace:
+    clean: all
+
+  steps:
+    - pwsh: |
+        Get-Item Env:* | Sort-Object -Property Name
+      displayName: 'List environment variables'
+
+    - pwsh: |
+        if ($env:SYSTEM_DEBUG -eq "true") {
+          $InformationPreference = "Continue"
+          $VerbosePreference = "Continue"
+          $DebugPreference = "Continue"
+        }
+        . ./functions.ps1
+        $vmMetadata = Get-ComputeMetadata
+        Write-Host "`nAzure VM instance compute metadata for Job '${env:SYSTEM_JOBID}':"
+        $vmMetadata | Format-List -Property AzurePublicCloud, location, name, osType, vmId, vmSize
+
+        $location = Get-AzureRegion
+        if ($location -ieq "${{ parameters.deploymentRegion }}") {
+          Write-Host "Agent is in same location as deployment region ('${{ parameters.deploymentRegion }}')"
+          Write-Output "##vso[task.setvariable variable=sameRegion;isOutput=true]true"
+        } else {
+          Write-Host "Agent is in different location ($location) as deployment region (${{ parameters.deploymentRegion }})"
+          Write-Output "##vso[task.setvariable variable=sameRegion;isOutput=true]false"
+        }
+        Write-Output "##vso[task.setvariable variable=location;isOutput=true]$location"
+
+        Write-Host "`nAzure VM IP location info for Job '${env:SYSTEM_JOBID}':"
+        Invoke-RestMethod https://ipinfo.io/json | Format-List
+
+        $selfLink = "${env:SYSTEM_TASKDEFINITIONSURI}${env:SYSTEM_TEAMPROJECT}/_build/results?buildId=${env:BUILD_BUILDID}&view=logs&j=${env:SYSTEM_JOBID}&t=${env:SYSTEM_TASKINSTANCEID}"
+        Write-Host "Link to this output: $selfLink"        
+      name: detectRegion
+      displayName: 'Show Azure VM location info'
+      workingDirectory: '$(scriptDirectory)'
+
+    - pwsh: |
+        $terraformVersion = (Get-Content .terraform-version)
+        Write-Host "##vso[task.setvariable variable=version;isOutput=true]${terraformVersion}"
+        Copy-Item backend.tf.sample backend.tf
+      name: terraformConfig
+      displayName: 'Prepare Terraform config'
+      workingDirectory: '$(terraformDirectory)'
+      ${{ if eq(parameters.mode,'TryMitigateWithRegion') }}:
+        condition: and(succeeded(), ne(coalesce(variables['detectRegion.location'],'null'),'${{ parameters.deploymentRegion }}'))
+
+    - task: TerraformInstaller@0
+      displayName: 'Install Terraform'
+      ${{ if eq(parameters.mode,'TryMitigateWithRegion') }}:
+        condition: and(succeeded(), ne(coalesce(variables['detectRegion.location'],'null'),'${{ parameters.deploymentRegion }}'))
+      inputs:
+        terraformVersion: '$(terraformConfig.version)'
+
+    - ${{ if parameters.unpinTerraformProviders }}:
+      # Unpin version e.g. "= 2.56" -> "~> 2.56"
+      - pwsh: |
+          (Get-Content ./provider.tf) -replace " = `" *= +",' = "~> ' | Out-File provider.tf
+          Get-Content ./provider.tf
+          if (Test-Path .terraform.lock.hcl) {
+            Remove-Item .terraform.lock.hcl -Force
+          }
+        displayName: 'Unpin Terraform provider versions'
+        workingDirectory: '$(terraformDirectory)'
+        ${{ if eq(parameters.mode,'TryMitigateWithRegion') }}:
+          condition: and(succeeded(), ne(coalesce(variables['detectRegion.location'],'null'),'${{ parameters.deploymentRegion }}'))
+
+    - task: TerraformCLI@0
+      displayName: 'Terraform init'
+      ${{ if eq(parameters.mode,'TryMitigateWithRegion') }}:
+        condition: and(succeeded(), ne(coalesce(variables['detectRegion.location'],'null'),'${{ parameters.deploymentRegion }}'))
+      inputs:
+        command: 'init'
+        workingDirectory: '$(terraformDirectory)'
+        backendType: 'azurerm'
+        backendServiceArm: '$(subscriptionConnection)'
+        backendAzureRmResourceGroupName: '$(TF_STATE_RESOURCE_GROUP_NAME)'
+        backendAzureRmStorageAccountName: '$(TF_STATE_STORAGE_ACCOUNT_NAME)'
+        backendAzureRmContainerName: '$(TF_STATE_CONTAINER_NAME)'
+        backendAzureRmKey: 'terraform.tfstate'
+        allowTelemetryCollection: true
+
+    - ${{ if ne(parameters.destroy, 'Never') }}:
+      - publish: $(terraformDirectory)
+        displayName: 'Publish Terraform workspace'
+        ${{ if eq(parameters.mode,'TryMitigateWithRegion') }}:
+          condition: and(succeeded(), ne(coalesce(variables['detectRegion.location'],'null'),'${{ parameters.deploymentRegion }}'), eq(variables['publishTerraformArtifact'],'true'))
+        artifact: $(terraformArtifactName)
+
+    - ${{ if parameters.clear }}:
+      - task: AzureCLI@2
+        name: cleanup
+        displayName: 'Clear Terraform state'
+        ${{ if eq(parameters.mode,'TryMitigateWithRegion') }}:
+          condition: and(succeeded(), ne(coalesce(variables['detectRegion.location'],'null'),'${{ parameters.deploymentRegion }}'))
+        inputs:
+          azureSubscription: '$(subscriptionConnection)'
+          scriptType: pscore
+          scriptLocation: inlineScript
+          inlineScript: |
+            # Clean up Terraform state
+            # Propagate pipeline Service Principal as Terraform variables
+            $env:ARM_CLIENT_ID       ??= $env:servicePrincipalId
+            $env:ARM_CLIENT_SECRET   ??= $env:servicePrincipalKey
+            $env:ARM_TENANT_ID       ??= $env:tenantId
+            # Get from Azure CLI context
+            $env:ARM_TENANT_ID       ??= $(az account show --query tenantId -o tsv)
+            $env:ARM_SUBSCRIPTION_ID ??= $(az account show --query id -o tsv)
+            $terraformState = (terraform state pull | ConvertFrom-Json)
+            if ($terraformState.resources) {
+              Write-Host "Clearing Terraform state in workspace ${env:TF_WORKSPACE}..."
+              $terraformState.outputs = New-Object PSObject # Empty output
+              $terraformState.resources = @() # No resources
+              $terraformState.serial++
+              $terraformState | ConvertTo-Json | terraform state push -
+            } else {
+              Write-Host "No resources in Terraform state in workspace ${env:TF_WORKSPACE}..."
+            }
+            terraform state pull 
+          addSpnToEnvironment: true
+          useGlobalConfig: true
+          failOnStandardError: true
+          workingDirectory: '$(terraformDirectory)'
+
+    - pwsh: |
+        Set-PSDebug -Trace 2
+        if ($${{ not(parameters.clear) }} -and (!((terraform output resource_suffix 2>&1) -match "Warning"))) {
+          $env:TF_VAR_RESOURCE_SUFFIX = $null
+          $env:TF_VAR_resource_suffix = "$(terraform output -raw resource_suffix 2>$null)"
+        }
+
+        # List environment variables
+        Get-ChildItem -Path Env: -Recurse -Include ARM_*,AZURE_*,GEEKZTER_*,TF_*,SYSTEM_* | Sort-Object -Property Name
+
+        # # Convert uppercased Terraform environment variables to .auto.tfvars file
+        # foreach ($tfvar in $(Get-ChildItem -Path Env: -Recurse -Include TF_VAR_*)) {
+        #   $terraformVariableName = $tfvar.Name.Substring(7).ToLowerInvariant()
+        #   $terraformVariableValue = $tfVar.Value
+
+        #   if ($terraformVariableValue -imatch "^\W*(true|false|\[[^\]]*\]|\{[^\}]*\})\W*$") {
+        #     # Boolean or List, write as-is
+        #     Write-Output "${terraformVariableName} = ${terraformVariableValue}" | Out-File ci.auto.tfvars -Append -Force
+        #   } else {
+        #     Write-Output "${terraformVariableName} = `"${terraformVariableValue}`"" | Out-File ci.auto.tfvars -Append -Force
+        #   }
+        # } 
+        # Write-Host "Contents of ci.auto.tfvars:"
+        # Get-Content ci.auto.tfvars
+      name: terraformVariables
+      displayName: 'Prepare Terraform variables'
+      workingDirectory: '$(terraformDirectory)'
+      ${{ if eq(parameters.mode,'TryMitigateWithRegion') }}:
+        condition: and(succeeded(), ne(coalesce(variables['detectRegion.location'],'null'),'${{ parameters.deploymentRegion }}'))
+
+    - task: AzureCLI@2
+      displayName: 'Terraform plan & apply'
+      name: apply
+      ${{ if eq(parameters.mode,'TryMitigateWithRegion') }}:
+        condition: and(succeeded(), ne(coalesce(variables['detectRegion.location'],'null'),'${{ parameters.deploymentRegion }}'))
+      inputs:
+        azureSubscription: '$(subscriptionConnection)'
+        scriptType: pscore
+        scriptLocation: inlineScript
+        inlineScript: |
+          # Propagate pipeline Service Principal as Terraform variables
+          $env:ARM_CLIENT_ID       ??= $env:servicePrincipalId
+          $env:ARM_CLIENT_SECRET   ??= $env:servicePrincipalKey
+          $env:ARM_TENANT_ID       ??= $env:tenantId
+          # Get from Azure CLI context
+          $env:ARM_TENANT_ID       ??= $(az account show --query tenantId -o tsv)
+          $env:ARM_SUBSCRIPTION_ID ??= $(az account show --query id -o tsv)
+
+          ./deploy.ps1 -apply -force -OpenStorageFirewall:$${{ eq(parameters.mode,'MitigateWithJITFWUpdate') }}
+        addSpnToEnvironment: true
+        useGlobalConfig: true
+        failOnStandardError: true
+        workingDirectory: '$(scriptDirectory)'
+
+    - task: AzureCLI@2
+      displayName: 'Retrieve blob'
+      ${{ if eq(parameters.mode,'TryMitigateWithRegion') }}:
+        condition: and(succeeded(), ne(coalesce(variables['detectRegion.location'],'null'),'${{ parameters.deploymentRegion }}'))
+      inputs:
+        azureSubscription: '$(subscriptionConnection)'
+        scriptType: pscore
+        scriptLocation: inlineScript
+        inlineScript: |
+          # Propagate pipeline Service Principal as Terraform variables
+          $env:ARM_CLIENT_ID       ??= $env:servicePrincipalId
+          $env:ARM_CLIENT_SECRET   ??= $env:servicePrincipalKey
+          $env:ARM_TENANT_ID       ??= $env:tenantId
+          # Get from Azure CLI context
+          $env:ARM_TENANT_ID       ??= $(az account show --query tenantId -o tsv)
+          $env:ARM_SUBSCRIPTION_ID ??= $(az account show --query id -o tsv)
+
+          if ($${{ eq(parameters.mode,'MitigateWithJITFWUpdate') }}) {
+            ./let_me_in.ps1
+            $waitSeconds = 30
+            Write-Host "Waiting $waitSeconds seconds..."
+            Start-Sleep -Seconds $waitSeconds
+          }
+
+          ./validate_storage_access.ps1
+        addSpnToEnvironment: true
+        useGlobalConfig: true
+        failOnStandardError: true
+        workingDirectory: '$(scriptDirectory)'
+
+    - ${{ if parameters.testReentrance }}:
+      - task: AzureCLI@2
+        displayName: 'Terraform plan & apply (re-entrance test)'
+        name: apply2
+        ${{ if eq(parameters.mode,'TryMitigateWithRegion') }}:
+          condition: and(succeeded(), ne(coalesce(variables['detectRegion.location'],'null'),'${{ parameters.deploymentRegion }}'))
+        inputs:
+          azureSubscription: '$(subscriptionConnection)'
+          scriptType: pscore
+          scriptLocation: inlineScript
+          inlineScript: |
+            # Propagate pipeline Service Principal as Terraform variables
+            $env:ARM_CLIENT_ID       ??= $env:servicePrincipalId
+            $env:ARM_CLIENT_SECRET   ??= $env:servicePrincipalKey
+            $env:ARM_TENANT_ID       ??= $env:tenantId
+            # Get from Azure CLI context
+            $env:ARM_TENANT_ID       ??= $(az account show --query tenantId -o tsv)
+            $env:ARM_SUBSCRIPTION_ID ??= $(az account show --query id -o tsv)
+
+            ./deploy.ps1 -apply -force -OpenStorageFirewall:$${{ eq(parameters.mode,'MitigateWithJITFWUpdate') }}
+          addSpnToEnvironment: true
+          useGlobalConfig: true
+          failOnStandardError: true
+          workingDirectory: '$(scriptDirectory)'
+
+    - ${{ if not(eq(parameters.destroy, 'Never')) }}:
+      - pwsh: |
+          Write-Host "##vso[task.setvariable variable=result;isOutput=true]success"
+        name: provisioningResult
+        displayName: 'Indicate provisioning success'
+        ${{ if eq(parameters.mode,'TryMitigateWithRegion') }}:
+          condition: and(succeeded(), ne(coalesce(variables['detectRegion.location'],'null'),'${{ parameters.deploymentRegion }}'))
+
+    - ${{ if not(eq(parameters.destroy, 'Never')) }}:
+      - task: AzureCLI@2
+        displayName: 'Terraform destroy'
+        name: destroy
+        ${{ if eq(parameters.mode,'TryMitigateWithRegion') }}:
+          condition: and(succeeded(), ne(coalesce(variables['detectRegion.location'],'null'),'${{ parameters.deploymentRegion }}'))
+        continueOnError: true
+        inputs:
+          azureSubscription: '$(subscriptionConnection)'
+          scriptType: pscore
+          scriptLocation: inlineScript
+          inlineScript: |
+            # Propagate pipeline Service Principal as Terraform variables
+            $env:ARM_CLIENT_ID       ??= $env:servicePrincipalId
+            $env:ARM_CLIENT_SECRET   ??= $env:servicePrincipalKey
+            $env:ARM_TENANT_ID       ??= $env:tenantId
+            # Get from Azure CLI context
+            $env:ARM_TENANT_ID       ??= $(az account show --query tenantId -o tsv)
+            $env:ARM_SUBSCRIPTION_ID ??= $(az account show --query id -o tsv)
+
+            ./deploy.ps1 -apply -force -OpenStorageFirewall:$${{ eq(parameters.mode,'MitigateWithJITFWUpdate') }}
+          addSpnToEnvironment: true
+          useGlobalConfig: true
+          failOnStandardError: true
+          workingDirectory: '$(scriptDirectory)'

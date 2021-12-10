@@ -83,7 +83,7 @@ function AzLogin (
     }
 }
 
-function Get-AzureRegion() {
+function Get-ComputeMetadata() {
     try {
         $vmMetadata = (Invoke-RestMethod -Headers @{"Metadata"="true"} -Method GET -NoProxy -Uri "http://169.254.169.254/metadata/instance/compute?api-version=2021-02-01" -TimeoutSec 1)
         $vmMetadata | Write-Debug
@@ -91,20 +91,19 @@ function Get-AzureRegion() {
         $vmMetadata = $null
     }
     if ($vmMetadata) {
-        Write-Debug "VM Name: $($vmMetadata.name)"
-        return $vmMetadata.location 
+        Write-Debug "Compute Metadata: $vmMetadata"
+        return $vmMetadata
+    } else {
+        Write-Debug "Not running in Azure"
     }
 }
 
-
-function Show-AzureRegion() {
-    $azureRegion = Get-AzureRegion
-    if ($azureRegion) {
-        Write-Host "Running in Azure region ${azureRegion}"
-    } else {
-        Write-Host "Not running in Azure"
+function Get-AzureRegion() {
+    $vmMetadata = Get-ComputeMetadata
+    if ($vmMetadata) {
+        Write-Host "Running in Azure region $($vmMetadata.location)"
+        return $vmMetadata.location
     }
-    return $azureRegion
 }
 
 function Get-TerraformDirectory {
@@ -160,4 +159,35 @@ function Set-PipelineVariablesFromTerraform () {
             Write-Host "##vso[task.setvariable variable=${outputVariable};isOutput=true]${value}"
         }
     }
+}
+
+function Test-Url (
+    [parameter(Mandatory=$true)][string]$Url,
+    [parameter(Mandatory=$false)][int]$MaxTests=600
+) {
+    $displayUrl = ($Url -replace "\?.*$","") # Do not display SAS token
+    $test = 0
+    Write-Host "`nTesting $displayUrl (max $MaxTests times)" -NoNewLine
+    while (!$responseOK -and ($test -lt $MaxTests)) {
+        try {
+            $test++
+            Write-Host "." -NoNewLine
+            $homePageResponse = Invoke-WebRequest -UseBasicParsing -Uri $Url
+            if ($homePageResponse.StatusCode -lt 400) {
+                $responseOK = $true
+            } else {
+                $responseOK = $false
+            }
+        }
+        catch {
+            $responseOK = $false
+            if ($test -ge $MaxTests) {
+                throw
+            } else {
+                Start-Sleep -Milliseconds 500
+            }
+        }
+    }
+    Write-Host "✓" # Force NewLine
+    Write-Host "Request to $displayUrl completed with HTTP Status Code $($homePageResponse.StatusCode)"
 }

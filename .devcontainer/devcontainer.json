@@ -1,0 +1,14 @@
+{
+    "extensions": [
+      "4ops.terraform",
+      "ms-azuretools.vscode-azureterraform",
+      "ms-vscode.azurecli",
+      "ms-vscode.PowerShell"
+    ],
+  
+    "settings": {
+      "terminal.integrated.shell.linux": "/usr/bin/pwsh"
+    },
+  
+    "postCreateCommand": "/usr/bin/pwsh -nop -f ./.devcontainer/createorupdate.ps1 | tee ~/post-create.log"
+  }
