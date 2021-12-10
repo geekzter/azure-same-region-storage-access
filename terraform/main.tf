@@ -1,14 +1,14 @@
 data azurerm_client_config current {}
 data azurerm_subscription primary {}
 
-data http localpublicip {
+data http local_public_ip {
 # Get public IP address of the machine running this terraform template
   url                          = "http://ipinfo.io/ip"
 }
 
-data http localpublicprefix {
+data http local_public_prefix {
 # Get public IP prefix of the machine running this terraform template
-  url                          = "https://stat.ripe.net/data/network-info/data.json?resource=${chomp(data.http.localpublicip.body)}"
+  url                          = "https://stat.ripe.net/data/network-info/data.json?resource=${chomp(data.http.local_public_ip.body)}"
 }
 
 # Random resource suffix, this will prevent name collisions when creating resources in parallel
@@ -26,14 +26,8 @@ locals {
   suffix                       = var.resource_suffix != "" ? lower(var.resource_suffix) : random_string.suffix.result
   repository                   = "azure-same-region-storage-access"
   resource_group_name          = "${lower(var.resource_prefix)}-${terraform.workspace}-${lower(local.suffix)}"
-  ipprefixdata                 = jsondecode(chomp(data.http.localpublicprefix.body))
-  ipprefix                     = local.ipprefixdata.data.prefix
-  admin_ip                     = [
-                                  chomp(data.http.localpublicip.body) 
-  ]
-  admin_ips                    = setunion(local.admin_ip,var.admin_ips)
-  admin_ip_ranges              = setunion([for ip in local.admin_ips : format("%s/30", ip)],var.admin_ip_ranges) # /32 not allowed in network_rules
-  admin_cidr_ranges            = [for range in local.admin_ip_ranges : cidrsubnet(range,0,0)] # Make sure ranges have correct base address
+  ip_prefix_data               = jsondecode(chomp(data.http.local_public_prefix.body))
+  ip_prefix                    = local.ip_prefix_data.data.prefix
 
   tags                         = {
     application                = "Azure same-region storage access"
