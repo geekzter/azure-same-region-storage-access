@@ -244,7 +244,7 @@ jobs:
           $env:ARM_TENANT_ID       ??= $(az account show --query tenantId -o tsv)
           $env:ARM_SUBSCRIPTION_ID ??= $(az account show --query id -o tsv)
 
-          ./deploy.ps1 -apply -force -SkipFirewallUpdate:$${{ ne(parameters.mode,'MitigateWithJITFWUpdate') }}
+          ./deploy.ps1 -apply -force -OpenStorageFirewall:$${{ eq(parameters.mode,'MitigateWithJITFWUpdate') }}
         addSpnToEnvironment: true
         useGlobalConfig: true
         failOnStandardError: true
@@ -274,11 +274,6 @@ jobs:
             Start-Sleep -Seconds $waitSeconds
           }
 
-          $waitToPropagateSeconds = 45
-          Write-Host "Waiting $waitToPropagateSeconds seconds for firewall rules update to reflect..."
-          Start-Sleep -Seconds $waitToPropagateSeconds
-
-          # Invoke-WebRequest "$(apply.storage_blob_url)"
           ./validate_storage_access.ps1
         addSpnToEnvironment: true
         useGlobalConfig: true
@@ -304,7 +299,7 @@ jobs:
             $env:ARM_TENANT_ID       ??= $(az account show --query tenantId -o tsv)
             $env:ARM_SUBSCRIPTION_ID ??= $(az account show --query id -o tsv)
 
-            ./deploy.ps1 -apply -force -SkipFirewallUpdate:$${{ ne(parameters.mode,'MitigateWithJITFWUpdate') }}
+            ./deploy.ps1 -apply -force -OpenStorageFirewall:$${{ eq(parameters.mode,'MitigateWithJITFWUpdate') }}
           addSpnToEnvironment: true
           useGlobalConfig: true
           failOnStandardError: true
@@ -338,7 +333,7 @@ jobs:
             $env:ARM_TENANT_ID       ??= $(az account show --query tenantId -o tsv)
             $env:ARM_SUBSCRIPTION_ID ??= $(az account show --query id -o tsv)
 
-            ./deploy.ps1 -destroy -force -SkipFirewallUpdate:$${{ ne(parameters.mode,'MitigateWithJITFWUpdate') }}
+            ./deploy.ps1 -apply -force -OpenStorageFirewall:$${{ eq(parameters.mode,'MitigateWithJITFWUpdate') }}
           addSpnToEnvironment: true
           useGlobalConfig: true
           failOnStandardError: true
