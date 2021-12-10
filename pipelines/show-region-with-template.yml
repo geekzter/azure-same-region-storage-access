@@ -46,3 +46,45 @@ jobs:
       displayName: 'Job 3'
       deploymentRegion: ${{ parameters.deploymentRegion }}
       precedingJob: job2
+  - template: show-region-template.yml
+    parameters:
+      name: 'job4'
+      displayName: 'Job 4'
+      deploymentRegion: ${{ parameters.deploymentRegion }}
+      precedingJob: job3
+  - template: show-region-template.yml
+    parameters:
+      name: 'job5'
+      displayName: 'Job 5'
+      deploymentRegion: ${{ parameters.deploymentRegion }}
+      precedingJob: job4
+  - template: show-region-template.yml
+    parameters:
+      name: 'job6'
+      displayName: 'Job 6'
+      deploymentRegion: ${{ parameters.deploymentRegion }}
+      precedingJob: job5
+  - template: show-region-template.yml
+    parameters:
+      name: 'job7'
+      displayName: 'Job 7'
+      deploymentRegion: ${{ parameters.deploymentRegion }}
+      precedingJob: job6
+  - template: show-region-template.yml
+    parameters:
+      name: 'job8'
+      displayName: 'Job 8'
+      deploymentRegion: ${{ parameters.deploymentRegion }}
+      precedingJob: job7
+  - template: show-region-template.yml
+    parameters:
+      name: 'job9'
+      displayName: 'Job 9'
+      deploymentRegion: ${{ parameters.deploymentRegion }}
+      precedingJob: job8
+  - template: show-region-template.yml
+    parameters:
+      name: 'job10'
+      displayName: 'Job 10'
+      deploymentRegion: ${{ parameters.deploymentRegion }}
+      precedingJob: job9
