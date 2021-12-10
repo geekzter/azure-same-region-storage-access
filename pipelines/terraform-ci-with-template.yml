@@ -45,7 +45,7 @@ parameters:
   type: boolean
   default: false
 
-name: $(Date:yyyyMMdd)$(Rev:.r)-${{ parameters.workspace }}-${{ parameters.deploymentRegion }}
+name: $(Date:yyyyMMdd)$(Rev:.r)-${{ parameters.workspace }}-${{ parameters.deploymentRegion }}-${{ parameters.mode }}
 
 trigger: none
 
