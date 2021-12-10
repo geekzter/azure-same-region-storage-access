@@ -172,7 +172,9 @@ jobs:
   - ${{ if ne(parameters.destroy, 'Never') }}:
     - job: 'Teardown'
       dependsOn:
-        - provisioning5
+        - provisioning1
+        - ${{ if eq(parameters.mode,'TryMitigateWithRegion') }}:
+          - provisioning5
       displayName: 'Tear down & Clean up (${{ lower(parameters.destroy) }})'
       ${{ if eq(parameters.destroy, 'Always') }}:
         condition: or(always(),canceled())
