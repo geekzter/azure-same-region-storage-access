@@ -19,6 +19,7 @@ param (
     [parameter(Mandatory=$false,HelpMessage="Perform Terraform plan stage")][switch]$Plan=$false,
     [parameter(Mandatory=$false,HelpMessage="Perform Terraform validate stage")][switch]$Validate=$false,
     [parameter(Mandatory=$false,HelpMessage="Perform Terraform apply stage (implies plan)")][switch]$Apply=$false,
+    [parameter(Mandatory=$false,HelpMessage="Validate storage access")][switch]$Test=$false,
     [parameter(Mandatory=$false,HelpMessage="Perform Terraform destroy stage")][switch]$Destroy=$false,
     [parameter(Mandatory=$false,HelpMessage="Show Terraform output variables")][switch]$Output=$false,
     [parameter(Mandatory=$false,HelpMessage="Don't show prompts unless something get's deleted that should not be")][switch]$Force=$false,
@@ -174,12 +175,18 @@ try {
 
     if ($Output) {
         Invoke "terraform output"
-    }
+    }    
 
     if (($Apply -or $Output) -and $pipeline) {
         # Export Terraform output as Pipeline output variables for subsequent tasks
         Set-PipelineVariablesFromTerraform
     }    
+
+    if ($Test) {
+        $testScript = (Join-Path $PSScriptRoot "validate_storage_access.ps1")
+        Write-Information "Invoking ${testScript}"
+        & $testScript
+    }
 
     if ($Destroy) {
         Invoke "terraform destroy $varArgs $forceArgs"

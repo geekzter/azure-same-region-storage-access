@@ -18,11 +18,11 @@ parameters:
 - name: mode
   displayName: Mode
   type: string
-  default: MitigateWithRegion
+  default: TryMitigateWithRegion
   values:
   - ReproduceConstraint 
   - MitigateWithJITFWUpdate
-  - MitigateWithRegion
+  - TryMitigateWithRegion
 - name: clear
   displayName: Clear State
   type: boolean
@@ -106,7 +106,7 @@ jobs:
       unpinTerraform: false
       unpinTerraformProviders: ${{ parameters.unpinTerraformProviders }}
 
-  - ${{ if eq(parameters.mode,'MitigateWithRegion') }}:
+  - ${{ if eq(parameters.mode,'TryMitigateWithRegion') }}:
     - template: terraform-ci-template.yml
       parameters:
         name: 'provisioning2'
@@ -121,7 +121,7 @@ jobs:
         unpinTerraform: false
         unpinTerraformProviders: ${{ parameters.unpinTerraformProviders }}
 
-  - ${{ if eq(parameters.mode,'MitigateWithRegion') }}:
+  - ${{ if eq(parameters.mode,'TryMitigateWithRegion') }}:
     - template: terraform-ci-template.yml
       parameters:
         name: 'provisioning3'
@@ -136,7 +136,7 @@ jobs:
         unpinTerraform: false
         unpinTerraformProviders: ${{ parameters.unpinTerraformProviders }}
 
-  - ${{ if eq(parameters.mode,'MitigateWithRegion') }}:
+  - ${{ if eq(parameters.mode,'TryMitigateWithRegion') }}:
     - template: terraform-ci-template.yml
       parameters:
         name: 'provisioning4'
@@ -151,7 +151,7 @@ jobs:
         unpinTerraform: false
         unpinTerraformProviders: ${{ parameters.unpinTerraformProviders }}
 
-  - ${{ if eq(parameters.mode,'MitigateWithRegion') }}:
+  - ${{ if eq(parameters.mode,'TryMitigateWithRegion') }}:
     - template: terraform-ci-template.yml
       parameters:
         name: 'provisioning5'

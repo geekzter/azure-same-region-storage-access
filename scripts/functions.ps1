@@ -160,3 +160,34 @@ function Set-PipelineVariablesFromTerraform () {
         }
     }
 }
+
+function Test-Url (
+    [parameter(Mandatory=$true)][string]$Url,
+    [parameter(Mandatory=$false)][int]$MaxTests=600
+) {
+    $displayUrl = ($Url -replace "\?.*$","") # Do not display SAS token
+    $test = 0
+    Write-Host "`nTesting $displayUrl (max $MaxTests times)" -NoNewLine
+    while (!$responseOK -and ($test -lt $MaxTests)) {
+        try {
+            $test++
+            Write-Host "." -NoNewLine
+            $homePageResponse = Invoke-WebRequest -UseBasicParsing -Uri $Url
+            if ($homePageResponse.StatusCode -lt 400) {
+                $responseOK = $true
+            } else {
+                $responseOK = $false
+            }
+        }
+        catch {
+            $responseOK = $false
+            if ($test -ge $MaxTests) {
+                throw
+            } else {
+                Start-Sleep -Milliseconds 500
+            }
+        }
+    }
+    Write-Host "✓" # Force NewLine
+    Write-Host "Request to $displayUrl completed with HTTP Status Code $($homePageResponse.StatusCode)"
+}

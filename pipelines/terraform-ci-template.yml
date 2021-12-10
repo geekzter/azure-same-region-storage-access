@@ -26,7 +26,7 @@ parameters:
   values:
   - ReproduceConstraint 
   - MitigateWithJITFWUpdate
-  - MitigateWithRegion
+  - TryMitigateWithRegion
 - name: clear
   displayName: Clear State
   type: boolean
@@ -116,12 +116,12 @@ jobs:
       name: terraformConfig
       displayName: 'Prepare Terraform config'
       workingDirectory: '$(terraformDirectory)'
-      ${{ if eq(parameters.mode,'MitigateWithRegion') }}:
+      ${{ if eq(parameters.mode,'TryMitigateWithRegion') }}:
         condition: and(succeeded(), ne(coalesce(variables['detectRegion.location'],'null'),'${{ parameters.deploymentRegion }}'))
 
     - task: TerraformInstaller@0
       displayName: 'Install Terraform'
-      ${{ if eq(parameters.mode,'MitigateWithRegion') }}:
+      ${{ if eq(parameters.mode,'TryMitigateWithRegion') }}:
         condition: and(succeeded(), ne(coalesce(variables['detectRegion.location'],'null'),'${{ parameters.deploymentRegion }}'))
       inputs:
         terraformVersion: '$(terraformConfig.version)'
@@ -136,12 +136,12 @@ jobs:
           }
         displayName: 'Unpin Terraform provider versions'
         workingDirectory: '$(terraformDirectory)'
-        ${{ if eq(parameters.mode,'MitigateWithRegion') }}:
+        ${{ if eq(parameters.mode,'TryMitigateWithRegion') }}:
           condition: and(succeeded(), ne(coalesce(variables['detectRegion.location'],'null'),'${{ parameters.deploymentRegion }}'))
 
     - task: TerraformCLI@0
       displayName: 'Terraform init'
-      ${{ if eq(parameters.mode,'MitigateWithRegion') }}:
+      ${{ if eq(parameters.mode,'TryMitigateWithRegion') }}:
         condition: and(succeeded(), ne(coalesce(variables['detectRegion.location'],'null'),'${{ parameters.deploymentRegion }}'))
       inputs:
         command: 'init'
@@ -157,7 +157,7 @@ jobs:
     - ${{ if ne(parameters.destroy, 'Never') }}:
       - publish: $(terraformDirectory)
         displayName: 'Publish Terraform workspace'
-        ${{ if eq(parameters.mode,'MitigateWithRegion') }}:
+        ${{ if eq(parameters.mode,'TryMitigateWithRegion') }}:
           condition: and(succeeded(), ne(coalesce(variables['detectRegion.location'],'null'),'${{ parameters.deploymentRegion }}'), eq(variables['publishTerraformArtifact'],'true'))
         artifact: $(terraformArtifactName)
 
@@ -165,7 +165,7 @@ jobs:
       - task: AzureCLI@2
         name: cleanup
         displayName: 'Clear Terraform state'
-        ${{ if eq(parameters.mode,'MitigateWithRegion') }}:
+        ${{ if eq(parameters.mode,'TryMitigateWithRegion') }}:
           condition: and(succeeded(), ne(coalesce(variables['detectRegion.location'],'null'),'${{ parameters.deploymentRegion }}'))
         inputs:
           azureSubscription: '$(subscriptionConnection)'
@@ -223,13 +223,13 @@ jobs:
       name: terraformVariables
       displayName: 'Prepare Terraform variables'
       workingDirectory: '$(terraformDirectory)'
-      ${{ if eq(parameters.mode,'MitigateWithRegion') }}:
+      ${{ if eq(parameters.mode,'TryMitigateWithRegion') }}:
         condition: and(succeeded(), ne(coalesce(variables['detectRegion.location'],'null'),'${{ parameters.deploymentRegion }}'))
 
     - task: AzureCLI@2
       displayName: 'Terraform plan & apply'
       name: apply
-      ${{ if eq(parameters.mode,'MitigateWithRegion') }}:
+      ${{ if eq(parameters.mode,'TryMitigateWithRegion') }}:
         condition: and(succeeded(), ne(coalesce(variables['detectRegion.location'],'null'),'${{ parameters.deploymentRegion }}`'))
       inputs:
         azureSubscription: '$(subscriptionConnection)'
@@ -252,7 +252,7 @@ jobs:
 
     - task: AzureCLI@2
       displayName: 'Retrieve blob'
-      ${{ if eq(parameters.mode,'MitigateWithRegion') }}:
+      ${{ if eq(parameters.mode,'TryMitigateWithRegion') }}:
         condition: and(succeeded(), ne(coalesce(variables['detectRegion.location'],'null'),'${{ parameters.deploymentRegion }}'))
       inputs:
         azureSubscription: '$(subscriptionConnection)'
@@ -278,7 +278,8 @@ jobs:
           Write-Host "Waiting $waitToPropagateSeconds seconds for firewall rules update to reflect..."
           Start-Sleep -Seconds $waitToPropagateSeconds
 
-          Invoke-WebRequest "$(apply.storage_blob_url)"
+          # Invoke-WebRequest "$(apply.storage_blob_url)"
+          ./validate_storage_access.ps1
         addSpnToEnvironment: true
         useGlobalConfig: true
         failOnStandardError: true
@@ -288,7 +289,7 @@ jobs:
       - task: AzureCLI@2
         displayName: 'Terraform plan & apply (re-entrance test)'
         name: apply2
-        ${{ if eq(parameters.mode,'MitigateWithRegion') }}:
+        ${{ if eq(parameters.mode,'TryMitigateWithRegion') }}:
           condition: and(succeeded(), ne(coalesce(variables['detectRegion.location'],'null'),'${{ parameters.deploymentRegion }}'))
         inputs:
           azureSubscription: '$(subscriptionConnection)'
@@ -314,14 +315,14 @@ jobs:
           Write-Host "##vso[task.setvariable variable=result;isOutput=true]success"
         name: provisioningResult
         displayName: 'Indicate provisioning success'
-        ${{ if eq(parameters.mode,'MitigateWithRegion') }}:
+        ${{ if eq(parameters.mode,'TryMitigateWithRegion') }}:
           condition: and(succeeded(), ne(coalesce(variables['detectRegion.location'],'null'),'${{ parameters.deploymentRegion }}'))
 
     - ${{ if not(eq(parameters.destroy, 'Never')) }}:
       - task: AzureCLI@2
         displayName: 'Terraform destroy'
         name: destroy
-        ${{ if eq(parameters.mode,'MitigateWithRegion') }}:
+        ${{ if eq(parameters.mode,'TryMitigateWithRegion') }}:
           condition: and(succeeded(), ne(coalesce(variables['detectRegion.location'],'null'),'${{ parameters.deploymentRegion }}'))
         continueOnError: true
         inputs:
