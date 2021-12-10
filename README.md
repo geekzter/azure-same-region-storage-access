@@ -14,7 +14,7 @@
 
 ## Workaround
 There are 2 strategies:
-- A workaround is to open up the Storage Firewall prior to Terraform plan stage. This is done using a default allow rule as the client IP address as seen by the Storage Firewall cannot be predicted. Run [terraform-ci-with-template.yml](./pipelines/terraform-ci-with-template.yml) with the `mode` parameter set to 'MitigateWithJITFWUpdate.    
+- A workaround is to open up the Storage Firewall prior to Terraform plan stage. This is done using a default allow rule as the client IP address as seen by the Storage Firewall cannot be predicted. Run [terraform-ci-with-template.yml](./pipelines/terraform-ci-with-template.yml) with the `mode` parameter set to 'MitigateWithJITFWUpdate'.    
 This approach is deterministic, but compromises on security.
 - Another workaround is try and find a pipeline agent in a region other than the target region. An agent can run in multiple regions in the same geography (e.g. northeurope & westeurope in the EU). The pipeline will submit jobs in sequence until either an alternate region (from the deployment target) has been found or the maxmum number of attempts has been reached. Run [terraform-ci-with-template.yml](./pipelines/terraform-ci-with-template.yml) with the `mode` parameter set to 'TryMitigateWithRegion'.    
 This approach is more secure, but non-deterministic.
