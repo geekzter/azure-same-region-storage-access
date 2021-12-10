@@ -77,6 +77,9 @@ variables:
   value: 'true'
 - name: 'TF_INPUT'
   value: 0
+- ${{ if eq(parameters.mode,'TryMitigateWithRegion') }}':
+  - name: 'TF_VAR_location'
+    value: ${{ parameters.deploymentRegion }}
 - name: 'TF_WORKSPACE'
   value: ${{ parameters.workspace }}
 - name: 'scriptDirectory'
