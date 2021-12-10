@@ -124,14 +124,23 @@ try {
     }
 
     if ($Plan -or $Apply -or $Destroy) {
+        # Convert uppercased Terraform environment variables (Azure Pipeline Agent) to their original casing expected by Terraform
+        foreach ($tfvar in $(Get-ChildItem -Path Env: -Recurse -Include TF_VAR_*)) {
+            $prefix = (($tfvar.Name.Split("_")[0,1] | Select-Object -First 2) -Join "_")
+            $properCaseName = $prefix + $tfvar.Name.Replace($prefix,"").ToLowerInvariant()
+            Invoke-Expression "`$env:$properCaseName = `$env:$($tfvar.Name)"  
+        } 
+
         Get-ChildItem Env:TF_VAR_*
         # Some variable voodoo to workaround behavior of the null check of user environment variables in pipelines
-        Get-ChildItem env:TF_VAR_location | Select-Object -ExpandProperty Value | Set-Variable location
-        if ($location.Length -eq 0) {
-            $location = Get-AzureRegion
-            $env:TF_VAR_location = $location
-        }
-        Write-Host "Using $location as deployment location"
+        # Get-ChildItem env:TF_VAR_location | Select-Object -ExpandProperty Value | Set-Variable location
+        # $location = $env:TF_VAR_location
+        # if ($location.Length -eq 0) {
+        #     $location = Get-AzureRegion
+        #     $env:TF_VAR_location = $location
+        # }
+        $env:TF_VAR_location ??= Get-AzureRegion
+        Write-Host "Using $env:TF_VAR_location as deployment location"
         Get-ChildItem Env:TF_VAR_*
 
         if ($OpenStorageFirewall) {
