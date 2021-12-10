@@ -126,11 +126,11 @@ try {
     if ($Plan -or $Apply -or $Destroy) {
         Get-ChildItem Env:TF_VAR_*
         # Some variable voodoo to workaround behavior of the null check of user environment variables in pipelines
-        $location = $env:TF_VAR_location
+        Get-ChildItem env:TF_VAR_location | Select-Object -ExpandProperty Value | Set-Variable location
         if ($location.Length -eq 0) {
             $location = Get-AzureRegion
+            $env:TF_VAR_location = $location
         }
-        $env:TF_VAR_location = $location
         Write-Host "Using $location as deployment location"
         Get-ChildItem Env:TF_VAR_*
 
