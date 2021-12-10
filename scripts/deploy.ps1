@@ -131,7 +131,7 @@ try {
             Invoke-Expression "`$env:$properCaseName = `$env:$($tfvar.Name)"  
         } 
 
-        $env:TF_VAR_location ??= Show-AzureRegion
+        $env:TF_VAR_location ??= Get-AzureRegion
         Write-Host "Using $env:TF_VAR_location as deployment target"
 
         if ($OpenStorageFirewall) {
