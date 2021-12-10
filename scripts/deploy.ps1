@@ -125,10 +125,13 @@ try {
 
     if ($Plan -or $Apply -or $Destroy) {
         Get-ChildItem Env:TF_VAR_*
-        if (!$env:TF_VAR_location) {
-            $env:TF_VAR_location = Get-AzureRegion
+        # Some variable voodoo to workaround behavior of the null check of user environment variables in pipelines
+        $location = $env:TF_VAR_location
+        if ($location.Length -eq 0) {
+            $location = Get-AzureRegion
         }
-        Write-Host "Using $env:TF_VAR_location as deployment location"
+        $env:TF_VAR_location = $location
+        Write-Host "Using $location as deployment location"
         Get-ChildItem Env:TF_VAR_*
 
         if ($OpenStorageFirewall) {
