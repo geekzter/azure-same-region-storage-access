@@ -11,18 +11,6 @@ data http localpublicprefix {
   url                          = "https://stat.ripe.net/data/network-info/data.json?resource=${chomp(data.http.localpublicip.body)}"
 }
 
-# # Random password generator
-# resource random_string password {
-#   length                       = 12
-#   upper                        = true
-#   lower                        = true
-#   number                       = true
-#   special                      = true
-# # override_special             = "!@#$%&*()-_=+[]{}<>:?" # default
-# # Avoid characters that may cause shell scripts to break
-#   override_special             = "!@#%*)(-_=+][]}{:?" 
-# }
-
 # Random resource suffix, this will prevent name collisions when creating resources in parallel
 resource random_string suffix {
   length                       = 4

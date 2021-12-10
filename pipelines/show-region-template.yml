@@ -62,6 +62,9 @@ jobs:
         }
         Write-Output "##vso[task.setvariable variable=location;isOutput=true]$location"
 
+        Write-Host "`nAzure VM IP location info for Job '${env:SYSTEM_JOBID}':"
+        Invoke-RestMethod https://ipinfo.io/json | Format-List
+
         $selfLink = "${env:SYSTEM_TASKDEFINITIONSURI}${env:SYSTEM_TEAMPROJECT}/_build/results?buildId=${env:BUILD_BUILDID}&view=logs&j=${env:SYSTEM_JOBID}&t=${env:SYSTEM_TASKINSTANCEID}"
         Write-Host "Link to this output: $selfLink"
       name: detectRegion

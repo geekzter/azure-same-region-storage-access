@@ -35,6 +35,14 @@ parameters:
   displayName: Test Terraform re-entrance (apply twice)
   type: boolean
   default: true
+- name: destroy
+  displayName: Destroy Infrastructure
+  type: string
+  values:
+  - Always
+  - Never 
+  - 'On failure'
+  - 'On success'
 - name: unpinTerraform
   displayName: Unpin Terraform version
   type: boolean
@@ -92,10 +100,13 @@ jobs:
         }
         Write-Output "##vso[task.setvariable variable=location;isOutput=true]$location"
 
+        Write-Host "`nAzure VM IP location info for Job '${env:SYSTEM_JOBID}':"
+        Invoke-RestMethod https://ipinfo.io/json | Format-List
+
         $selfLink = "${env:SYSTEM_TASKDEFINITIONSURI}${env:SYSTEM_TEAMPROJECT}/_build/results?buildId=${env:BUILD_BUILDID}&view=logs&j=${env:SYSTEM_JOBID}&t=${env:SYSTEM_TASKINSTANCEID}"
-        Write-Host "Link to this output: $selfLink"
+        Write-Host "Link to this output: $selfLink"        
       name: detectRegion
-      displayName: 'Show Azure VM instance info'
+      displayName: 'Show Azure VM location info'
       workingDirectory: '$(scriptDirectory)'
 
     - pwsh: |
@@ -105,11 +116,13 @@ jobs:
       name: terraformConfig
       displayName: 'Prepare Terraform config'
       workingDirectory: '$(terraformDirectory)'
-      condition: ne(coalesce(variables['detectRegion.location'],'null'),'${{ parameters.deploymentRegion }}')
+      ${{ eq(parameters.mode,'MitigateWithRegion') }}:
+        condition: ne(coalesce(variables['detectRegion.location'],'null'),'${{ parameters.deploymentRegion }}')
 
     - task: TerraformInstaller@0
       displayName: 'Install Terraform'
-      condition: ne(coalesce(variables['detectRegion.location'],'null'),'${{ parameters.deploymentRegion }}')
+      ${{ eq(parameters.mode,'MitigateWithRegion') }}:
+        condition: ne(coalesce(variables['detectRegion.location'],'null'),'${{ parameters.deploymentRegion }}')
       inputs:
         terraformVersion: '$(terraformConfig.version)'
 
@@ -123,11 +136,13 @@ jobs:
           }
         displayName: 'Unpin Terraform provider versions'
         workingDirectory: '$(terraformDirectory)'
-        condition: ne(coalesce(variables['detectRegion.location'],'null'),'${{ parameters.deploymentRegion }}')
+        ${{ eq(parameters.mode,'MitigateWithRegion') }}:
+          condition: ne(coalesce(variables['detectRegion.location'],'null'),'${{ parameters.deploymentRegion }}')
 
     - task: TerraformCLI@0
       displayName: 'Terraform init'
-      condition: ne(coalesce(variables['detectRegion.location'],'null'),'${{ parameters.deploymentRegion }}')
+      ${{ eq(parameters.mode,'MitigateWithRegion') }}:
+        condition: ne(coalesce(variables['detectRegion.location'],'null'),'${{ parameters.deploymentRegion }}')
       inputs:
         command: 'init'
         workingDirectory: '$(terraformDirectory)'
@@ -139,16 +154,19 @@ jobs:
         backendAzureRmKey: 'terraform.tfstate'
         allowTelemetryCollection: true
 
-    - publish: $(terraformDirectory)
-      displayName: 'Publish Terraform workspace'
-      condition: and(succeeded(), ne(coalesce(variables['detectRegion.location'],'null'),'${{ parameters.deploymentRegion }}'), eq(variables['publishTerraformArtifact'],'true'))
-      artifact: $(terraformArtifactName)
+    - ${{ if ne(parameters.destroy, 'Never') }}:
+      - publish: $(terraformDirectory)
+        displayName: 'Publish Terraform workspace'
+        ${{ eq(parameters.mode,'MitigateWithRegion') }}:
+          condition: and(succeeded(), ne(coalesce(variables['detectRegion.location'],'null'),'${{ parameters.deploymentRegion }}'), eq(variables['publishTerraformArtifact'],'true'))
+        artifact: $(terraformArtifactName)
 
     - ${{ if parameters.clear }}:
       - task: AzureCLI@2
         name: cleanup
         displayName: 'Clear Terraform state'
-        condition: ne(coalesce(variables['detectRegion.location'],'null'),'${{ parameters.deploymentRegion }}')
+        ${{ eq(parameters.mode,'MitigateWithRegion') }}:
+          condition: ne(coalesce(variables['detectRegion.location'],'null'),'${{ parameters.deploymentRegion }}')
         inputs:
           azureSubscription: '$(subscriptionConnection)'
           scriptType: pscore
@@ -205,12 +223,14 @@ jobs:
       name: terraformVariables
       displayName: 'Prepare Terraform variables'
       workingDirectory: '$(terraformDirectory)'
-      condition: ne(coalesce(variables['detectRegion.location'],'null'),'${{ parameters.deploymentRegion }}')
+      ${{ eq(parameters.mode,'MitigateWithRegion') }}:
+        condition: ne(coalesce(variables['detectRegion.location'],'null'),'${{ parameters.deploymentRegion }}')
 
     - task: AzureCLI@2
       displayName: 'Terraform plan & apply'
       name: apply
-      condition: ne(coalesce(variables['detectRegion.location'],'null'),'${{ parameters.deploymentRegion }}')
+      ${{ eq(parameters.mode,'MitigateWithRegion') }}:
+        condition: ne(coalesce(variables['detectRegion.location'],'null'),'${{ parameters.deploymentRegion }}')
       inputs:
         azureSubscription: '$(subscriptionConnection)'
         scriptType: pscore
@@ -232,7 +252,8 @@ jobs:
 
     - task: AzureCLI@2
       displayName: 'Retrieve blob'
-      condition: ne(coalesce(variables['detectRegion.location'],'null'),'${{ parameters.deploymentRegion }}')
+      ${{ eq(parameters.mode,'MitigateWithRegion') }}:
+        condition: ne(coalesce(variables['detectRegion.location'],'null'),'${{ parameters.deploymentRegion }}')
       inputs:
         azureSubscription: '$(subscriptionConnection)'
         scriptType: pscore
@@ -262,7 +283,8 @@ jobs:
       - task: AzureCLI@2
         displayName: 'Terraform plan & apply (re-entrance test)'
         name: apply2
-        condition: ne(coalesce(variables['detectRegion.location'],'null'),'${{ parameters.deploymentRegion }}')
+        ${{ eq(parameters.mode,'MitigateWithRegion') }}:
+          condition: ne(coalesce(variables['detectRegion.location'],'null'),'${{ parameters.deploymentRegion }}')
         inputs:
           azureSubscription: '$(subscriptionConnection)'
           scriptType: pscore
@@ -282,32 +304,36 @@ jobs:
           failOnStandardError: true
           workingDirectory: '$(scriptDirectory)'
 
-    - pwsh: |
-        Write-Host "##vso[task.setvariable variable=result;isOutput=true]success"
-      name: provisioningResult
-      displayName: 'Indicate provisioning success'
-      condition: and(succeeded(), ne(coalesce(variables['detectRegion.location'],'null'),'${{ parameters.deploymentRegion }}'))
+    - ${{ if not(eq(parameters.destroy, 'Never')) }}:
+      - pwsh: |
+          Write-Host "##vso[task.setvariable variable=result;isOutput=true]success"
+        name: provisioningResult
+        displayName: 'Indicate provisioning success'
+        ${{ eq(parameters.mode,'MitigateWithRegion') }}:
+          condition: and(succeeded(), ne(coalesce(variables['detectRegion.location'],'null'),'${{ parameters.deploymentRegion }}'))
 
-    - task: AzureCLI@2
-      displayName: 'Terraform destroy'
-      name: destroy
-      condition: ne(coalesce(variables['detectRegion.location'],'null'),'${{ parameters.deploymentRegion }}')
-      continueOnError: true
-      inputs:
-        azureSubscription: '$(subscriptionConnection)'
-        scriptType: pscore
-        scriptLocation: inlineScript
-        inlineScript: |
-          # Propagate pipeline Service Principal as Terraform variables
-          $env:ARM_CLIENT_ID       ??= $env:servicePrincipalId
-          $env:ARM_CLIENT_SECRET   ??= $env:servicePrincipalKey
-          $env:ARM_TENANT_ID       ??= $env:tenantId
-          # Get from Azure CLI context
-          $env:ARM_TENANT_ID       ??= $(az account show --query tenantId -o tsv)
-          $env:ARM_SUBSCRIPTION_ID ??= $(az account show --query id -o tsv)
+    - ${{ if not(eq(parameters.destroy, 'Never')) }}:
+      - task: AzureCLI@2
+        displayName: 'Terraform destroy'
+        name: destroy
+        ${{ eq(parameters.mode,'MitigateWithRegion') }}:
+          condition: ne(coalesce(variables['detectRegion.location'],'null'),'${{ parameters.deploymentRegion }}')
+        continueOnError: true
+        inputs:
+          azureSubscription: '$(subscriptionConnection)'
+          scriptType: pscore
+          scriptLocation: inlineScript
+          inlineScript: |
+            # Propagate pipeline Service Principal as Terraform variables
+            $env:ARM_CLIENT_ID       ??= $env:servicePrincipalId
+            $env:ARM_CLIENT_SECRET   ??= $env:servicePrincipalKey
+            $env:ARM_TENANT_ID       ??= $env:tenantId
+            # Get from Azure CLI context
+            $env:ARM_TENANT_ID       ??= $(az account show --query tenantId -o tsv)
+            $env:ARM_SUBSCRIPTION_ID ??= $(az account show --query id -o tsv)
 
-          ./deploy.ps1 -destroy -force -SkipFirewallUpdate:$${{ ne(parameters.mode,'MitigateWithJITFWUpdate') }}
-        addSpnToEnvironment: true
-        useGlobalConfig: true
-        failOnStandardError: true
-        workingDirectory: '$(scriptDirectory)'
+            ./deploy.ps1 -destroy -force -SkipFirewallUpdate:$${{ ne(parameters.mode,'MitigateWithJITFWUpdate') }}
+          addSpnToEnvironment: true
+          useGlobalConfig: true
+          failOnStandardError: true
+          workingDirectory: '$(scriptDirectory)'

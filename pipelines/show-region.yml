@@ -44,6 +44,10 @@ jobs:
         $vmMetadata = (Get-ComputeMetadata)
         Write-Host "`nAzure VM instance compute metadata for Job '${env:SYSTEM_JOBID}':"
         $vmMetadata | Format-List -Property AzurePublicCloud, location, name, osType, vmId, vmSize
+
+        Write-Host "`nAzure VM IP location info for Job '${env:SYSTEM_JOBID}':"
+        Invoke-RestMethod https://ipinfo.io/json | Format-List
+
         $selfLink = "${env:SYSTEM_TASKDEFINITIONSURI}${env:SYSTEM_TEAMPROJECT}/_build/results?buildId=${env:BUILD_BUILDID}&view=logs&j=${env:SYSTEM_JOBID}&t=${env:SYSTEM_TASKINSTANCEID}"
         Write-Host "Link to this output: $selfLink"
       displayName: 'Show Azure VM instance info'
@@ -68,6 +72,10 @@ jobs:
         $vmMetadata = (Get-ComputeMetadata)
         Write-Host "`nAzure VM instance compute metadata for Job '${env:SYSTEM_JOBID}':"
         $vmMetadata | Format-List -Property AzurePublicCloud, location, name, osType, vmId, vmSize
+
+        Write-Host "`nAzure VM IP location info for Job '${env:SYSTEM_JOBID}':"
+        Invoke-RestMethod https://ipinfo.io/json | Format-List
+
         $selfLink = "${env:SYSTEM_TASKDEFINITIONSURI}${env:SYSTEM_TEAMPROJECT}/_build/results?buildId=${env:BUILD_BUILDID}&view=logs&j=${env:SYSTEM_JOBID}&t=${env:SYSTEM_TASKINSTANCEID}"
         Write-Host "Link to this output: $selfLink"
       displayName: 'Show Azure VM instance info'
@@ -92,6 +100,10 @@ jobs:
         $vmMetadata = (Get-ComputeMetadata)
         Write-Host "`nAzure VM instance compute metadata for Job '${env:SYSTEM_JOBID}':"
         $vmMetadata | Format-List -Property AzurePublicCloud, location, name, osType, vmId, vmSize
+
+        Write-Host "`nAzure VM IP location info for Job '${env:SYSTEM_JOBID}':"
+        Invoke-RestMethod https://ipinfo.io/json | Format-List
+
         $selfLink = "${env:SYSTEM_TASKDEFINITIONSURI}${env:SYSTEM_TEAMPROJECT}/_build/results?buildId=${env:BUILD_BUILDID}&view=logs&j=${env:SYSTEM_JOBID}&t=${env:SYSTEM_TASKINSTANCEID}"
         Write-Host "Link to this output: $selfLink"
       displayName: 'Show Azure VM instance info'
@@ -116,6 +128,10 @@ jobs:
         $vmMetadata = (Get-ComputeMetadata)
         Write-Host "`nAzure VM instance compute metadata for Job '${env:SYSTEM_JOBID}':"
         $vmMetadata | Format-List -Property AzurePublicCloud, location, name, osType, vmId, vmSize
+
+        Write-Host "`nAzure VM IP location info for Job '${env:SYSTEM_JOBID}':"
+        Invoke-RestMethod https://ipinfo.io/json | Format-List
+
         $selfLink = "${env:SYSTEM_TASKDEFINITIONSURI}${env:SYSTEM_TEAMPROJECT}/_build/results?buildId=${env:BUILD_BUILDID}&view=logs&j=${env:SYSTEM_JOBID}&t=${env:SYSTEM_TASKINSTANCEID}"
         Write-Host "Link to this output: $selfLink"
       displayName: 'Show Azure VM instance info'
@@ -141,6 +157,10 @@ jobs:
         $vmMetadata = (Get-ComputeMetadata)
         Write-Host "`nAzure VM instance compute metadata for Job '${env:SYSTEM_JOBID}':"
         $vmMetadata | Format-List -Property AzurePublicCloud, location, name, osType, vmId, vmSize
+
+        Write-Host "`nAzure VM IP location info for Job '${env:SYSTEM_JOBID}':"
+        Invoke-RestMethod https://ipinfo.io/json | Format-List
+
         $selfLink = "${env:SYSTEM_TASKDEFINITIONSURI}${env:SYSTEM_TEAMPROJECT}/_build/results?buildId=${env:BUILD_BUILDID}&view=logs&j=${env:SYSTEM_JOBID}&t=${env:SYSTEM_TASKINSTANCEID}"
         Write-Host "Link to this output: $selfLink"
       displayName: 'Show Azure VM instance info'
