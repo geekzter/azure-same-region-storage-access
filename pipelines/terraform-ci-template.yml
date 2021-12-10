@@ -230,7 +230,7 @@ jobs:
       displayName: 'Terraform plan & apply'
       name: apply
       ${{ if eq(parameters.mode,'TryMitigateWithRegion') }}:
-        condition: and(succeeded(), ne(coalesce(variables['detectRegion.location'],'null'),'${{ parameters.deploymentRegion }}`'))
+        condition: and(succeeded(), ne(coalesce(variables['detectRegion.location'],'null'),'${{ parameters.deploymentRegion }}'))
       inputs:
         azureSubscription: '$(subscriptionConnection)'
         scriptType: pscore
