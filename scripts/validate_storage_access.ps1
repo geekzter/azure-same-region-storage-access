@@ -6,7 +6,7 @@
 #Requires -Version 7
 
 param ( 
-    [parameter(Mandatory=$false)][int]$MaxTests=600
+    [parameter(Mandatory=$false)][int]$MaxTests=60
 ) 
 
 . (Join-Path $PSScriptRoot functions.ps1)

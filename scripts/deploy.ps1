@@ -125,7 +125,7 @@ try {
 
     if ($Plan -or $Apply -or $Destroy) {
         $env:TF_VAR_location ??= Get-AzureRegion
-        Write-Host "Using $($env:TF_VAR_location) as deployment location"
+        Write-Host "Using $(Get-Item env:TF_VAR_location | Select-Object -ExpandProperty Value) as deployment location"
 
         if ($OpenStorageFirewall) {
             # ISSUE: If a pipeline agent or Codespace is located in the same region as a storage account the request will be routed over Microsoft’s internal IPv6 network. As a result the source IP of the request is not the same as the one added to the Storage Account firewall.
