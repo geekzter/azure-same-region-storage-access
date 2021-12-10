@@ -116,12 +116,12 @@ jobs:
       name: terraformConfig
       displayName: 'Prepare Terraform config'
       workingDirectory: '$(terraformDirectory)'
-      ${{ eq(parameters.mode,'MitigateWithRegion') }}:
+      ${{ if eq(parameters.mode,'MitigateWithRegion') }}:
         condition: ne(coalesce(variables['detectRegion.location'],'null'),'${{ parameters.deploymentRegion }}')
 
     - task: TerraformInstaller@0
       displayName: 'Install Terraform'
-      ${{ eq(parameters.mode,'MitigateWithRegion') }}:
+      ${{ if eq(parameters.mode,'MitigateWithRegion') }}:
         condition: ne(coalesce(variables['detectRegion.location'],'null'),'${{ parameters.deploymentRegion }}')
       inputs:
         terraformVersion: '$(terraformConfig.version)'
@@ -136,12 +136,12 @@ jobs:
           }
         displayName: 'Unpin Terraform provider versions'
         workingDirectory: '$(terraformDirectory)'
-        ${{ eq(parameters.mode,'MitigateWithRegion') }}:
+        ${{ if eq(parameters.mode,'MitigateWithRegion') }}:
           condition: ne(coalesce(variables['detectRegion.location'],'null'),'${{ parameters.deploymentRegion }}')
 
     - task: TerraformCLI@0
       displayName: 'Terraform init'
-      ${{ eq(parameters.mode,'MitigateWithRegion') }}:
+      ${{ if eq(parameters.mode,'MitigateWithRegion') }}:
         condition: ne(coalesce(variables['detectRegion.location'],'null'),'${{ parameters.deploymentRegion }}')
       inputs:
         command: 'init'
@@ -157,7 +157,7 @@ jobs:
     - ${{ if ne(parameters.destroy, 'Never') }}:
       - publish: $(terraformDirectory)
         displayName: 'Publish Terraform workspace'
-        ${{ eq(parameters.mode,'MitigateWithRegion') }}:
+        ${{ if eq(parameters.mode,'MitigateWithRegion') }}:
           condition: and(succeeded(), ne(coalesce(variables['detectRegion.location'],'null'),'${{ parameters.deploymentRegion }}'), eq(variables['publishTerraformArtifact'],'true'))
         artifact: $(terraformArtifactName)
 
@@ -165,7 +165,7 @@ jobs:
       - task: AzureCLI@2
         name: cleanup
         displayName: 'Clear Terraform state'
-        ${{ eq(parameters.mode,'MitigateWithRegion') }}:
+        ${{ if eq(parameters.mode,'MitigateWithRegion') }}:
           condition: ne(coalesce(variables['detectRegion.location'],'null'),'${{ parameters.deploymentRegion }}')
         inputs:
           azureSubscription: '$(subscriptionConnection)'
@@ -223,13 +223,13 @@ jobs:
       name: terraformVariables
       displayName: 'Prepare Terraform variables'
       workingDirectory: '$(terraformDirectory)'
-      ${{ eq(parameters.mode,'MitigateWithRegion') }}:
+      ${{ if eq(parameters.mode,'MitigateWithRegion') }}:
         condition: ne(coalesce(variables['detectRegion.location'],'null'),'${{ parameters.deploymentRegion }}')
 
     - task: AzureCLI@2
       displayName: 'Terraform plan & apply'
       name: apply
-      ${{ eq(parameters.mode,'MitigateWithRegion') }}:
+      ${{ if eq(parameters.mode,'MitigateWithRegion') }}:
         condition: ne(coalesce(variables['detectRegion.location'],'null'),'${{ parameters.deploymentRegion }}')
       inputs:
         azureSubscription: '$(subscriptionConnection)'
@@ -252,7 +252,7 @@ jobs:
 
     - task: AzureCLI@2
       displayName: 'Retrieve blob'
-      ${{ eq(parameters.mode,'MitigateWithRegion') }}:
+      ${{ if eq(parameters.mode,'MitigateWithRegion') }}:
         condition: ne(coalesce(variables['detectRegion.location'],'null'),'${{ parameters.deploymentRegion }}')
       inputs:
         azureSubscription: '$(subscriptionConnection)'
@@ -283,7 +283,7 @@ jobs:
       - task: AzureCLI@2
         displayName: 'Terraform plan & apply (re-entrance test)'
         name: apply2
-        ${{ eq(parameters.mode,'MitigateWithRegion') }}:
+        ${{ if eq(parameters.mode,'MitigateWithRegion') }}:
           condition: ne(coalesce(variables['detectRegion.location'],'null'),'${{ parameters.deploymentRegion }}')
         inputs:
           azureSubscription: '$(subscriptionConnection)'
@@ -309,14 +309,14 @@ jobs:
           Write-Host "##vso[task.setvariable variable=result;isOutput=true]success"
         name: provisioningResult
         displayName: 'Indicate provisioning success'
-        ${{ eq(parameters.mode,'MitigateWithRegion') }}:
+        ${{ if eq(parameters.mode,'MitigateWithRegion') }}:
           condition: and(succeeded(), ne(coalesce(variables['detectRegion.location'],'null'),'${{ parameters.deploymentRegion }}'))
 
     - ${{ if not(eq(parameters.destroy, 'Never')) }}:
       - task: AzureCLI@2
         displayName: 'Terraform destroy'
         name: destroy
-        ${{ eq(parameters.mode,'MitigateWithRegion') }}:
+        ${{ if eq(parameters.mode,'MitigateWithRegion') }}:
           condition: ne(coalesce(variables['detectRegion.location'],'null'),'${{ parameters.deploymentRegion }}')
         continueOnError: true
         inputs:
