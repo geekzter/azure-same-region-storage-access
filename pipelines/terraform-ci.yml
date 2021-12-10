@@ -342,6 +342,7 @@ jobs:
       - task: AzureCLI@2
         displayName: 'Terraform destroy (${{ lower(parameters.destroy) }})'
         name: destroy
+        continueOnError: true
         inputs:
           azureSubscription: '$(subscriptionConnection)'
           scriptType: pscore
