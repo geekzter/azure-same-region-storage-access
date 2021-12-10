@@ -131,17 +131,8 @@ try {
             Invoke-Expression "`$env:$properCaseName = `$env:$($tfvar.Name)"  
         } 
 
-        Get-ChildItem Env:TF_VAR_*
-        # Some variable voodoo to workaround behavior of the null check of user environment variables in pipelines
-        # Get-ChildItem env:TF_VAR_location | Select-Object -ExpandProperty Value | Set-Variable location
-        # $location = $env:TF_VAR_location
-        # if ($location.Length -eq 0) {
-        #     $location = Get-AzureRegion
-        #     $env:TF_VAR_location = $location
-        # }
-        $env:TF_VAR_location ??= Get-AzureRegion
-        Write-Host "Using $env:TF_VAR_location as deployment location"
-        Get-ChildItem Env:TF_VAR_*
+        $env:TF_VAR_location ??= Show-AzureRegion
+        Write-Host "Using $env:TF_VAR_location as deployment target"
 
         if ($OpenStorageFirewall) {
             # ISSUE: If a pipeline agent or Codespace is located in the same region as a storage account the request will be routed over Microsoft’s internal IPv6 network. As a result the source IP of the request is not the same as the one added to the Storage Account firewall.
