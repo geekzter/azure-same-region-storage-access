@@ -48,6 +48,7 @@ jobs:
           $DebugPreference = "Continue"
         }
         . ./functions.ps1
+        $vmMetadata = Get-ComputeMetadata
         if ($vmMetaData) {
           Write-Host "`nAzure VM instance '${env:AGENT_MACHINENAME}' compute metadata:"
           $vmMetadata | Format-List -Property AzurePublicCloud, location, name, osType, vmId, vmSize
