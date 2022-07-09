@@ -48,9 +48,12 @@ jobs:
           $DebugPreference = "Continue"
         }
         . ./functions.ps1
-        $vmMetadata = Get-ComputeMetadata
-        Write-Host "`nAzure VM instance compute metadata for Job '${env:SYSTEM_JOBID}':"
-        $vmMetadata | Format-List -Property AzurePublicCloud, location, name, osType, vmId, vmSize
+        if ($vmMetaData) {
+          Write-Host "`nAzure VM instance '${env:AGENT_MACHINENAME}' compute metadata:"
+          $vmMetadata | Format-List -Property AzurePublicCloud, location, name, osType, vmId, vmSize
+        } else {
+           Write-Error "Agent with name '${env:AGENT_MACHINENAME}' does not appear to be an Azure VM"
+        }
 
         $location = Get-AzureRegion
         if ($location -ieq "${{ parameters.deploymentRegion }}") {
