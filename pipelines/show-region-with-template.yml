@@ -2,7 +2,7 @@ parameters:
 - name: deploymentRegion
   displayName: Azure Storage Deployment Region
   type: string
-  default: australiasoutheast
+  default: eastus2
 
 name: $(Date:yyyyMMdd)$(Rev:.r)-${{ parameters.deploymentRegion }}
 

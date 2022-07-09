@@ -78,13 +78,15 @@ data azurerm_storage_account_sas app_storage {
   expiry                       = time_offset.sas_expiry.rfc3339  
 
   permissions {
-    read                       = true
     add                        = false
     create                     = false
-    write                      = false
     delete                     = false
+    filter                     = false
     list                       = true
-    update                     = false
     process                    = false
+    read                       = true
+    tag                        = false
+    update                     = false
+    write                      = false
   }
 }

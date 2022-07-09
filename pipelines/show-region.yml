@@ -42,11 +42,15 @@ jobs:
         }
         . ./functions.ps1
         $vmMetadata = (Get-ComputeMetadata)
-        Write-Host "`nAzure VM instance compute metadata for Job '${env:SYSTEM_JOBID}':"
-        $vmMetadata | Format-List -Property AzurePublicCloud, location, name, osType, vmId, vmSize
+        if ($vmMetaData) {
+          Write-Host "`nAzure VM instance '${env:AGENT_MACHINENAME}' compute metadata:"
+          $vmMetadata | Format-List -Property AzurePublicCloud, location, name, osType, vmId, vmSize
 
-        Write-Host "`nAzure VM IP location info for Job '${env:SYSTEM_JOBID}':"
-        Invoke-RestMethod https://ipinfo.io/json | Format-List
+          Write-Host "`nAzure VM '${env:AGENT_MACHINENAME}' IP location info:"
+          Invoke-RestMethod https://ipinfo.io/json | Format-List
+        } else {
+           Write-Warning "Agent with name '${env:AGENT_MACHINENAME}' does not appear to be an Azure VM"
+        }
 
         $selfLink = "${env:SYSTEM_TASKDEFINITIONSURI}${env:SYSTEM_TEAMPROJECT}/_build/results?buildId=${env:BUILD_BUILDID}&view=logs&j=${env:SYSTEM_JOBID}&t=${env:SYSTEM_TASKINSTANCEID}"
         Write-Host "Link to this output: $selfLink"
