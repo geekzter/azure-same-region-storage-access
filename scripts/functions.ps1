@@ -85,7 +85,7 @@ function AzLogin (
 
 function Get-ComputeMetadata() {
     try {
-        $vmMetadata = (Invoke-RestMethod -Headers @{"Metadata"="true"} -Method GET -NoProxy -Uri "http://169.254.169.254/metadata/instance/compute?api-version=2021-02-01" -TimeoutSec 1)
+        &{$ErrorActionPreference = 'SilentlyContinue';$script:vmMetadata=(Invoke-RestMethod -Headers @{"Metadata"="true"} -Method GET -NoProxy -Uri "http://169.254.169.254/metadata/instance/compute?api-version=2021-02-01" -TimeoutSec 1)}
         $vmMetadata | Write-Debug
     } catch {
         $vmMetadata = $null
