@@ -84,7 +84,7 @@ data azurerm_storage_account_sas app_storage {
     filter                     = false
     list                       = true
     process                    = false
-    read                       = false
+    read                       = true
     tag                        = false
     update                     = false
     write                      = false
