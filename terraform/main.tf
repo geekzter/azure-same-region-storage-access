@@ -22,6 +22,7 @@ resource random_string suffix {
 
 # These variables will be used throughout the Terraform templates
 locals {
+  owner                        = var.application_owner != "" ? var.application_owner : data.azurerm_client_config.current.object_id
 # password                     = ".Az9${random_string.password.result}"
   suffix                       = var.resource_suffix != "" ? lower(var.resource_suffix) : random_string.suffix.result
   repository                   = "azure-same-region-storage-access"
@@ -30,7 +31,9 @@ locals {
   ip_prefix                    = local.ip_prefix_data.data.prefix
 
   tags                         = {
-    application                = "Azure same-region storage access"
+    application                = var.application_name
+    github-repo                = "https://github.com/geekzter/azure-same-region-storage-access"
+    owner                      = local.owner
     provisioner                = "terraform"
     provisioner-client-id      = data.azurerm_client_config.current.client_id
     provisioner-object-id      = data.azurerm_client_config.current.object_id

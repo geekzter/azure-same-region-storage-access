@@ -26,4 +26,6 @@ override.tf.json
 # !example_override.tf
 
 # Ignore files with secrets in them
+*.auto.tfvars
+*.tfvars
 backend.tf
