@@ -58,7 +58,6 @@ if (($workspace -ieq "prod") -and $Force) {
 try {
     $tfdirectory = (Get-TerraformDirectory)
     Push-Location $tfdirectory
-    AzLogin -DisplayMessages
     # Print version info
     terraform -version
 
@@ -127,6 +126,8 @@ try {
     }
 
     if ($Plan -or $Apply -or $Destroy) {
+        AzLogin -DisplayMessages
+
         # Convert uppercased Terraform environment variables (Azure Pipeline Agent) to their original casing expected by Terraform
         foreach ($tfvar in $(Get-ChildItem -Path Env: -Recurse -Include TF_VAR_*)) {
             $prefix = (($tfvar.Name.Split("_")[0,1] | Select-Object -First 2) -Join "_")
