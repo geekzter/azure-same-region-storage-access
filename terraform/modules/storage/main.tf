@@ -13,7 +13,7 @@ resource azurerm_storage_account app_storage {
  
   provisioner "local-exec" {
     # TODO: Add --auth-mode login once supported
-    command                    = "az storage logging update --account-name ${self.name} --log rwd --retention 90 --services b"
+    command                    = "az storage logging update --account-name ${self.name} --log rwd --retention 90 --services b --subscription ${split("/",self.id)[2]}"
   }
 
   tags                         = var.tags
