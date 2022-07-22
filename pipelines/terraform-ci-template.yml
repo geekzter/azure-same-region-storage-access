@@ -158,10 +158,16 @@ jobs:
     #     backendAzureRmKey: 'terraform.tfstate'
     #     allowTelemetryCollection: true
 
-    - pwsh: |
-        ./deploy.ps1 -Init
+    - task: AzureCLI@2
       displayName: 'Terraform init'
-      workingDirectory: '$(scriptDirectory)'
+      inputs:
+        azureSubscription: '$(subscriptionConnection)'
+        scriptType: pscore
+        scriptLocation: inlineScript
+        inlineScript: |
+          ./deploy.ps1 -Init
+        failOnStandardError: true
+        workingDirectory: '$(scriptDirectory)'
 
     - ${{ if ne(parameters.destroy, 'Never') }}:
       - publish: $(terraformDirectory)

@@ -265,11 +265,17 @@ jobs:
         inputs:
           terraformVersion: '$(terraformConfig.version)'
 
-      - pwsh: |
-          ./deploy.ps1 -Init
+      - task: AzureCLI@2
         displayName: 'Terraform init'
-        workingDirectory: '$(scriptDirectory)'
-
+        inputs:
+          azureSubscription: '$(subscriptionConnection)'
+          scriptType: pscore
+          scriptLocation: inlineScript
+          inlineScript: |
+            ./deploy.ps1 -Init
+          failOnStandardError: true
+          workingDirectory: '$(scriptDirectory)'
+          
       - task: AzureCLI@2
         name: cleanup
         displayName: 'Clean up Terraform state'
