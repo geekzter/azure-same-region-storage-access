@@ -32,6 +32,7 @@ locals {
 
   tags                         = {
     application                = var.application_name
+    github-repo                = "https://github.com/geekzter/azure-same-region-storage-access"
     owner                      = local.owner
     provisioner                = "terraform"
     provisioner-client-id      = data.azurerm_client_config.current.client_id
