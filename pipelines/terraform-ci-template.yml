@@ -231,6 +231,7 @@ jobs:
         # Get-Content ci.auto.tfvars
       name: terraformVariables
       displayName: 'Prepare Terraform variables'
+      ignoreLASTEXITCODE: true
       workingDirectory: '$(terraformDirectory)'
       ${{ if eq(parameters.mode,'TryMitigateWithRegion') }}:
         condition: and(succeeded(), ne(coalesce(variables['detectRegion.location'],'null'),'${{ parameters.deploymentRegion }}'))

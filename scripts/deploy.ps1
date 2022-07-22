@@ -76,7 +76,7 @@ try {
                     $fail = $true
                 }
                 if (!($env:TF_STATE_backend_resource_group_name -or $env:ARM_ACCESS_KEY -or $env:ARM_SAS_TOKEN)) {
-                    Write-Warning "Environment variables ARM_ACCESS_KEY or ARM_SAS_TOKEN or TF_STATE_backend_resource_group_name (with $identity granted 'Storage Blob Data Contributor' role) must be set when creating a new backend from $backendTemplate"
+                    Write-Warning "Environment variables ARM_ACCESS_KEY or ARM_SAS_TOKEN or TF_STATE_backend_resource_group_name (with Terraform identity granted 'Storage Blob Data Contributor' role) must be set when creating a new backend from $backendTemplate"
                     $fail = $true
                 }
                 if ($fail) {
