@@ -251,13 +251,13 @@ jobs:
         displayName: 'Download Terraform directory from provisioning job'
         artifact: $(terraformArtifactName)
 
-      # - pwsh: |
-      #     $terraformVersion = (Get-Content .terraform-version)
-      #     Write-Host "##vso[task.setvariable variable=version;isOutput=true]${terraformVersion}"
-      #     Copy-Item backend.tf.sample backend.tf
-      #   name: terraformConfig
-      #   displayName: 'Prepare Terraform config'
-      #   workingDirectory: '$(terraformDirectory)'
+      - pwsh: |
+          $terraformVersion = (Get-Content .terraform-version)
+          Write-Host "##vso[task.setvariable variable=version;isOutput=true]${terraformVersion}"
+          # Copy-Item backend.tf.sample backend.tf
+        name: terraformConfig
+        displayName: 'Prepare Terraform config'
+        workingDirectory: '$(terraformDirectory)'
 
       - task: TerraformInstaller@0
         condition: succeededOrFailed() # Procees clearing Terraform state, even if resources could not be removed
