@@ -1,6 +1,6 @@
 # Azure Storage same region access
  
-[![Build Status](https://dev.azure.com/ericvan/VDC/_apis/build/status/regions/azure-same-region-storage-access-ci?branchName=main)](https://dev.azure.com/ericvan/VDC/_build/latest?definitionId=125&branchName=main)
+[![Build Status](https://dev.azure.com/ericvan/PipelineSamples/_apis/build/status/network/same-region-terraform-ci-with-template?branchName=main)](https://dev.azure.com/ericvan/PipelineSamples/_build/latest?definitionId=154&branchName=main)
 ## Private IP space
 - Azure Storage uses private IP space when the client is [in the same region](https://docs.microsoft.com/en-us/azure/storage/common/storage-network-security?tabs=azure-portal#grant-access-from-an-internet-ip-range) even when Private Endpoints are not used. The client IP address as seen by the Storage Firewall is a private IP address that cannot be predicted. Hence Storage Firewall can't be used to allow/block access over the public endpoint
 - Terraform will need storage data plane read access during plan stage, hence any dependency tricks during apply stage will not work
