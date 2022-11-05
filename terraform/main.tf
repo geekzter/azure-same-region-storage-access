@@ -8,7 +8,7 @@ data http local_public_ip {
 
 data http local_public_prefix {
 # Get public IP prefix of the machine running this terraform template
-  url                          = "https://stat.ripe.net/data/network-info/data.json?resource=${chomp(data.http.local_public_ip.body)}"
+  url                          = "https://stat.ripe.net/data/network-info/data.json?resource=${chomp(data.http.local_public_ip.response_body)}"
 }
 
 # Random resource suffix, this will prevent name collisions when creating resources in parallel
@@ -27,7 +27,7 @@ locals {
   suffix                       = var.resource_suffix != "" ? lower(var.resource_suffix) : random_string.suffix.result
   repository                   = "azure-same-region-storage-access"
   resource_group_name          = "${lower(var.resource_prefix)}-${terraform.workspace}-${lower(local.suffix)}"
-  ip_prefix_data               = jsondecode(chomp(data.http.local_public_prefix.body))
+  ip_prefix_data               = jsondecode(chomp(data.http.local_public_prefix.response_body))
   ip_prefix                    = local.ip_prefix_data.data.prefix
 
   tags                         = {
