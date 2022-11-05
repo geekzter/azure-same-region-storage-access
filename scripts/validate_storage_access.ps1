@@ -5,24 +5,19 @@
 #> 
 #Requires -Version 7
 
-param ( 
-    [parameter(Mandatory=$false)][int]$MaxTests=60
-) 
-
 . (Join-Path $PSScriptRoot functions.ps1)
 
 $tfdirectory=$(Join-Path (Split-Path -Parent -Path $PSScriptRoot) "terraform")
 Push-Location $tfdirectory
 
 try {    
-    $blobUrl = (Get-TerraformOutput storage_blob_url)  
-    if (!$blobUrl) {
-        Write-Warning "Azure Storage blob not found, has infrastructure been provisioned?"
-        exit
-    }
+    $storageUrl = (Get-TerraformOutput storage_url)  
+    Write-Debug "storageUrl: $storageUrl"
+    $storageSas = (Get-TerraformOutput storage_sas)  
+    Write-Debug "storageSas: $storageSas"
 
-    # Invoke-WebRequest $blobUrl
-    Test-Url -Url $blobUrl -MaxTests $MaxTests
+    Write-Debug "az storage container list --blob-endpoint `"$storageUrl`" --sas-token `"$storageSas`""
+    az storage container list --blob-endpoint "$storageUrl" --sas-token "$storageSas"
 } finally {
     Pop-Location
 }

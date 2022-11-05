@@ -18,18 +18,9 @@ parameters:
 jobs:
 - job: ${{ parameters.name }}
   displayName: ${{ parameters.displayName }}
-  # ${{ if ne(length(parameters.precedingJobs),0) }}:  
-  #   dependsOn:
-  #     - ${{ each value in parameters.precedingJobs }}:
-  #       - ${{ value }}
   ${{ if ne(length(parameters.precedingJob),0) }}:  
     dependsOn: ${{ parameters.precedingJob }}
     condition: eq(dependencies.${{ parameters.precedingJob }}.outputs['detectRegion.location'],'${{ parameters.deploymentRegion }}') # Same region, try again
-    # condition: eq(dependencies.${{ parameters.precedingJob }}.outputs['detectRegion.sameRegion'],'true') # Same region, try again
-    # condition: ne(dependencies.${{ parameters.precedingJob }}.outputs['detectRegion.sameRegion'],'false')
-    # condition: not(containsValue(dependencies.*.outputs['detectRegion.sameRegion'], 'false'))
-  # ${{ if ne(length(parameters.precedingJobs),0) }}:  
-  #   condition: 
   variables:
   - group: 'storage-access-ci'
   - name: 'scriptDirectory'

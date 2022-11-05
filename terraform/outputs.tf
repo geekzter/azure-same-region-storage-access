@@ -14,7 +14,11 @@ output storage_account_name {
   value       = module.storage.name
 }
 
-output storage_blob_url {
+output storage_sas {
   sensitive   = true
-  value       = module.storage.blob_url
+  value       = module.storage.storage_sas
+}
+
+output storage_url {
+  value       = module.storage.storage_url
 }
