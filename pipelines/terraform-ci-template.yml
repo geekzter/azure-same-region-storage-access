@@ -329,7 +329,7 @@ jobs:
             $env:ARM_TENANT_ID       ??= $(az account show --query tenantId -o tsv)
             $env:ARM_SUBSCRIPTION_ID ??= $(az account show --query id -o tsv)
 
-            ./deploy.ps1 -apply -force -OpenStorageFirewall:$${{ eq(parameters.mode,'MitigateWithJITFWUpdate') }}
+            ./deploy.ps1 -destroy -force
           addSpnToEnvironment: true
           useGlobalConfig: true
           failOnStandardError: true
