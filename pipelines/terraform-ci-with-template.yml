@@ -47,6 +47,13 @@ parameters:
 
 name: $(Date:yyyyMMdd)$(Rev:.r)-$(SourceBranchName)-${{ parameters.workspace }}-${{ parameters.deploymentRegion }}-${{ parameters.mode }}
 
+resources:
+  repositories:
+  - repository: azure-identity-scripts
+    type: github
+    endpoint: github.com # Service Connection name
+    name: geekzter/azure-identity-scripts
+
 trigger: none
 
 pr:
@@ -73,6 +80,10 @@ variables:
   value: 'azure-same-region-storage-access'
 - name: AZURE_EXTENSION_USE_DYNAMIC_INSTALL
   value: 'yes_without_prompt'
+- name: 'identityRepository'
+  value: '$(Build.SourcesDirectory)/azure-identity-scripts'
+- name: 'identityScriptDirectory'
+  value: '$(identityRepository)/scripts/azure-devops'
 - name: 'TF_IN_AUTOMATION'
   value: 'true'
 - name: 'TF_INPUT'
@@ -83,11 +94,11 @@ variables:
 - name: 'TF_WORKSPACE'
   value: ${{ parameters.workspace }}
 - name: 'scriptDirectory'
-  value: '$(Build.SourcesDirectory)/scripts'
+  value: '$(Build.SourcesDirectory)/azure-same-region-storage-access/scripts'
 - name: 'terraformArtifactName'
   value: 'terraform'
 - name: 'terraformDirectory'
-  value: '$(Build.SourcesDirectory)/terraform'
+  value: '$(Build.SourcesDirectory)/azure-same-region-storage-access/terraform'
 - name: 'TF_VAR_resource_prefix'
   value: 'storage-access'
 - name: 'TF_VAR_run_id'
