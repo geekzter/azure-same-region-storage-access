@@ -198,8 +198,8 @@ jobs:
           useGlobalConfig: true
           failOnStandardError: true
           workingDirectory: '$(terraformDirectory)'
-      env:
-        ARM_USE_AZUREAD: true
+        env:
+          ARM_USE_AZUREAD: true
 
     - pwsh: |
         Set-PSDebug -Trace 2
